@@ -1,0 +1,44 @@
+# =============================================================================
+# DRMS - Cron Jobs for OCI Production
+# Install: sudo crontab -u drms crontab-oci.txt
+# Verify:  sudo crontab -u drms -l
+# =============================================================================
+
+# Environment
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+NODE_ENV=production
+
+# ---------------------------------------------------------------------------
+# Application Tasks
+# ---------------------------------------------------------------------------
+
+# Check overdue assignments and send reminders (8:00 AM daily)
+0 8 * * * cd /opt/drms && /usr/bin/node -e "require('./scripts/check-overdue')" >> /var/log/drms/cron.log 2>&1
+
+# ---------------------------------------------------------------------------
+# Backups
+# ---------------------------------------------------------------------------
+
+# Database and file backup (2:00 AM daily)
+0 2 * * * /opt/drms/backup-oci.sh >> /var/log/drms/backup.log 2>&1
+
+# ---------------------------------------------------------------------------
+# Monitoring
+# ---------------------------------------------------------------------------
+
+# Health check and system monitoring (every 5 minutes)
+*/5 * * * * /opt/drms/monitor.sh >> /var/log/drms/monitor.log 2>&1
+
+# ---------------------------------------------------------------------------
+# Maintenance
+# ---------------------------------------------------------------------------
+
+# Clean temp upload files older than 24 hours (3:00 AM daily)
+0 3 * * * find /mnt/drms-uploads/temp -type f -mtime +1 -delete 2>/dev/null
+
+# Restart PM2 processes weekly for memory cleanup (Sunday 4:00 AM)
+0 4 * * 0 cd /opt/drms && /usr/local/bin/pm2 restart drms >> /var/log/drms/cron.log 2>&1
+
+# Renew SSL certificates (twice daily as recommended by Let's Encrypt)
+0 0,12 * * * /usr/bin/certbot renew --quiet --deploy-hook "systemctl reload nginx"

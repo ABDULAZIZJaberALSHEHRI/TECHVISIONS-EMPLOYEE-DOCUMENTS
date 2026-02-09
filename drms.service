@@ -1,0 +1,49 @@
+# =============================================================================
+# DRMS - Systemd Service File (Alternative to PM2)
+# Install: sudo cp drms.service /etc/systemd/system/
+# Enable:  sudo systemctl enable drms
+# Start:   sudo systemctl start drms
+# Logs:    sudo journalctl -u drms -f
+# =============================================================================
+
+[Unit]
+Description=DRMS - Document Request Management System
+Documentation=https://github.com/your-org/drms
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=drms
+Group=drms
+WorkingDirectory=/opt/drms
+ExecStart=/usr/bin/node .next/standalone/server.js
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/var/log/drms/app.log
+StandardError=append:/var/log/drms/error.log
+
+# Environment
+Environment=NODE_ENV=production
+Environment=PORT=3000
+EnvironmentFile=/opt/drms/.env
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/drms /mnt/drms-uploads /var/log/drms
+PrivateTmp=true
+
+# Resource limits
+LimitNOFILE=65535
+MemoryMax=2G
+CPUQuota=200%
+
+# Graceful shutdown
+TimeoutStopSec=30
+KillMode=mixed
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target
