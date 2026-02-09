@@ -66,9 +66,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[#1B4F72]">System Settings</h1>
+        <h1 className="text-2xl font-bold text-gray-900">System Settings</h1>
         <Button onClick={handleSave} disabled={saving}>
           {saving ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

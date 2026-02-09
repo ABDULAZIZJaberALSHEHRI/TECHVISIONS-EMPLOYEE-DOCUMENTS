@@ -1,5 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import type { Role } from "@prisma/client";
 
@@ -24,27 +25,55 @@ declare module "next-auth/jwt" {
   }
 }
 
-export const authOptions: NextAuthOptions = {
-  providers: [
-    AzureADProvider({
-      clientId: process.env.AZURE_AD_CLIENT_ID!,
-      clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
-      tenantId: process.env.AZURE_AD_TENANT_ID!,
-      authorization: {
-        params: {
-          scope: "openid profile email User.Read",
-        },
+const providers: NextAuthOptions["providers"] = [
+  AzureADProvider({
+    clientId: process.env.AZURE_AD_CLIENT_ID!,
+    clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
+    tenantId: process.env.AZURE_AD_TENANT_ID!,
+    authorization: {
+      params: {
+        scope: "openid profile email User.Read",
       },
-      profile(profile) {
+    },
+    profile(profile) {
+      return {
+        id: profile.sub,
+        name: profile.name || profile.preferred_username,
+        email: profile.email || profile.preferred_username,
+        image: null,
+      };
+    },
+  }),
+];
+
+// Dev-only credentials provider for local testing
+if (process.env.NODE_ENV === "development") {
+  providers.push(
+    CredentialsProvider({
+      id: "dev-credentials",
+      name: "Dev Login",
+      credentials: {
+        email: { label: "Email", type: "email" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email) return null;
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email },
+        });
+        if (!user || !user.isActive) return null;
         return {
-          id: profile.sub,
-          name: profile.name || profile.preferred_username,
-          email: profile.email || profile.preferred_username,
-          image: null,
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.avatarUrl,
         };
       },
-    }),
-  ],
+    })
+  );
+}
+
+export const authOptions: NextAuthOptions = {
+  providers,
   session: {
     strategy: "jwt",
     maxAge: 8 * 60 * 60, // 8 hours
@@ -55,7 +84,14 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (!account || !profile) return false;
+      if (!account) return false;
+
+      // Dev credentials provider — user already validated in authorize()
+      if (account.provider === "dev-credentials") {
+        return true;
+      }
+
+      if (!profile) return false;
 
       try {
         const azureAdId =
@@ -109,6 +145,20 @@ export const authOptions: NextAuthOptions = {
       }
     },
     async jwt({ token, user, account, profile }) {
+      // Dev credentials provider — look up by user id directly
+      if (account?.provider === "dev-credentials" && user) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { id: true, role: true, department: true },
+        });
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.role = dbUser.role;
+          token.department = dbUser.department;
+        }
+        return token;
+      }
+
       if (account && profile) {
         const azureAdId =
           (profile as Record<string, string>).oid ||

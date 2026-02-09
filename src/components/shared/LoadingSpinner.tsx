@@ -21,9 +21,9 @@ export function LoadingSpinner({
   text,
 }: LoadingSpinnerProps) {
   return (
-    <div className={cn("flex items-center justify-center gap-2", className)}>
-      <Loader2 className={cn("animate-spin text-primary", sizeMap[size])} />
-      {text && <span className="text-sm text-muted-foreground">{text}</span>}
+    <div className={cn("flex items-center justify-center gap-2 animate-fade-in", className)}>
+      <Loader2 className={cn("animate-spin text-blue-500", sizeMap[size])} />
+      {text && <span className="text-sm text-gray-500">{text}</span>}
     </div>
   );
 }

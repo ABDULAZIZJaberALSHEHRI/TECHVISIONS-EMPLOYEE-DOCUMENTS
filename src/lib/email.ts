@@ -26,7 +26,7 @@ function getBaseTemplate(content: string): string {
     </head>
     <body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background-color:#f5f5f5;">
       <div style="max-width:600px;margin:0 auto;background-color:#ffffff;">
-        <div style="background-color:#1B4F72;padding:20px 30px;">
+        <div style="background-color:#3B82F6;padding:20px 30px;">
           <h1 style="color:#ffffff;margin:0;font-size:24px;">${companyName}</h1>
           <p style="color:#AED6F1;margin:4px 0 0;font-size:14px;">Document Request Management System</p>
         </div>
@@ -75,7 +75,7 @@ export async function sendNewRequestEmail(
   requestId: string
 ): Promise<boolean> {
   const html = `
-    <h2 style="color:#1B4F72;margin-top:0;">New Document Request</h2>
+    <h2 style="color:#3B82F6;margin-top:0;">New Document Request</h2>
     <p>Hello ${employeeName},</p>
     <p>A new document request has been assigned to you:</p>
     <div style="background-color:#f8f9fa;border-left:4px solid #2E86C1;padding:15px;margin:20px 0;">

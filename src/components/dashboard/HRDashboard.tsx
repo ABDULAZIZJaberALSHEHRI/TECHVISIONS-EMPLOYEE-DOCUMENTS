@@ -14,7 +14,6 @@ import {
   CheckCircle,
   Plus,
   Users,
-  Eye,
 } from "lucide-react";
 import {
   PieChart,
@@ -59,7 +58,7 @@ interface DashboardData {
   }[];
 }
 
-const PIE_COLORS = ["#F39C12", "#2E86C1", "#27AE60", "#E74C3C", "#E74C3C"];
+const PIE_COLORS = ["#F59E0B", "#3B82F6", "#22C55E", "#EF4444", "#8B5CF6"];
 
 export function HRDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -86,18 +85,21 @@ export function HRDashboard() {
           title="Active Requests"
           value={data.stats.totalRequests}
           icon={<FileText className="h-6 w-6" />}
+          delay={0}
         />
         <StatsCard
           title="Pending"
           value={data.stats.pendingSubmissions}
           icon={<Clock className="h-6 w-6" />}
           color="yellow"
+          delay={60}
         />
         <StatsCard
           title="Awaiting Review"
           value={data.stats.submittedAwaitingReview}
           icon={<Upload className="h-6 w-6" />}
           color="blue"
+          delay={120}
         />
         <StatsCard
           title="Overdue"
@@ -105,18 +107,20 @@ export function HRDashboard() {
           icon={<AlertTriangle className="h-6 w-6" />}
           color="red"
           pulse={data.stats.overdue > 0}
+          delay={180}
         />
         <StatsCard
           title="Approved (Month)"
           value={data.stats.approvedThisMonth}
           icon={<CheckCircle className="h-6 w-6" />}
           color="green"
+          delay={240}
         />
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card>
+        <Card className="animate-fade-in-up animate-fill-both" style={{ animationDelay: "300ms" }}>
           <CardHeader>
             <CardTitle className="text-base">Submissions by Status</CardTitle>
           </CardHeader>
@@ -145,25 +149,25 @@ export function HRDashboard() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex h-[250px] items-center justify-center text-muted-foreground">
+              <div className="flex h-[250px] items-center justify-center text-gray-400">
                 No data yet
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="animate-fade-in-up animate-fill-both" style={{ animationDelay: "360ms" }}>
           <CardHeader>
             <CardTitle className="text-base">Requests Per Month</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={data.requestsPerMonth}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                <YAxis allowDecimals={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#6B7280" }} />
+                <YAxis allowDecimals={false} tick={{ fill: "#6B7280" }} />
                 <Tooltip />
-                <Bar dataKey="count" fill="#1B4F72" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" fill="#3B82F6" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -173,22 +177,22 @@ export function HRDashboard() {
       {/* Bottom section */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Recent Activity */}
-        <Card>
+        <Card className="animate-fade-in-up animate-fill-both" style={{ animationDelay: "420ms" }}>
           <CardHeader>
             <CardTitle className="text-base">Recent Activity</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {data.recentActivity.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No recent activity</p>
+              <p className="text-sm text-gray-400">No recent activity</p>
             ) : (
               data.recentActivity.map((activity) => (
                 <div
                   key={activity.id}
-                  className="flex items-start justify-between border-b pb-2 last:border-0"
+                  className="flex items-start justify-between border-b border-gray-100 pb-2 last:border-0 transition-colors duration-150 hover:bg-gray-50 rounded-lg px-2 py-1 -mx-2"
                 >
                   <div>
-                    <p className="text-sm">
-                      <span className="font-medium">
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium text-gray-900">
                         {activity.user?.name || "System"}
                       </span>{" "}
                       {activity.action.toLowerCase().replace(/_/g, " ")}
@@ -196,12 +200,12 @@ export function HRDashboard() {
                     {activity.details &&
                       typeof activity.details === "object" &&
                       "requestTitle" in activity.details && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-gray-400">
                           {String(activity.details.requestTitle)}
                         </p>
                       )}
                   </div>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  <span className="text-xs text-gray-400 whitespace-nowrap">
                     {formatDistanceToNow(new Date(activity.createdAt), {
                       addSuffix: true,
                     })}
@@ -213,25 +217,25 @@ export function HRDashboard() {
         </Card>
 
         {/* Upcoming Deadlines */}
-        <Card>
+        <Card className="animate-fade-in-up animate-fill-both" style={{ animationDelay: "480ms" }}>
           <CardHeader>
             <CardTitle className="text-base">Upcoming Deadlines</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {data.upcomingDeadlines.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-400">
                 No upcoming deadlines in the next 7 days
               </p>
             ) : (
               data.upcomingDeadlines.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between border-b pb-2 last:border-0 cursor-pointer hover:bg-gray-50 rounded px-2 py-1 -mx-2"
+                  className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0 cursor-pointer hover:bg-blue-50/50 rounded-lg px-2 py-1.5 -mx-2 transition-all duration-150"
                   onClick={() => router.push(`/hr/requests/${item.id}`)}
                 >
                   <div>
-                    <p className="text-sm font-medium">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm font-medium text-gray-900">{item.title}</p>
+                    <p className="text-xs text-gray-400">
                       Due: {format(new Date(item.deadline), "MMM dd, yyyy")}
                     </p>
                   </div>
@@ -239,7 +243,7 @@ export function HRDashboard() {
                     variant="secondary"
                     className={
                       item.completionPercent === 100
-                        ? "bg-green-100 text-green-700"
+                        ? "bg-emerald-100 text-emerald-700"
                         : "bg-blue-100 text-blue-700"
                     }
                   >
@@ -253,7 +257,7 @@ export function HRDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <Card>
+      <Card className="animate-fade-in-up animate-fill-both" style={{ animationDelay: "540ms" }}>
         <CardHeader>
           <CardTitle className="text-base">Quick Actions</CardTitle>
         </CardHeader>
@@ -264,7 +268,7 @@ export function HRDashboard() {
           </Button>
           <Button
             variant="outline"
-            className="border-red-200 text-red-700 hover:bg-red-50"
+            className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
             onClick={() => router.push("/hr/requests?status=OVERDUE")}
           >
             <AlertTriangle className="mr-2 h-4 w-4" />

@@ -160,11 +160,11 @@ export default function RequestDetailPage() {
   const statusConfig = REQUEST_STATUS_CONFIG[request.status];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#1B4F72]">
+          <h1 className="text-2xl font-bold text-gray-900">
             {request.title}
           </h1>
           <div className="mt-2 flex items-center gap-3">

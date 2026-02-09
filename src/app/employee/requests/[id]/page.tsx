@@ -93,10 +93,10 @@ export default function EmployeeRequestDetailPage() {
       assignment.status === "REJECTED");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#1B4F72]">{request.title}</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{request.title}</h1>
         <div className="mt-2 flex items-center gap-3">
           <PriorityBadge priority={request.priority} />
           <Badge

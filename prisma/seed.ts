@@ -21,6 +21,22 @@ async function main() {
   });
   console.log(`Created admin user: ${admin.email}`);
 
+  // Dev test users for local testing
+  const devUsers = [
+    { azureAdId: "dev-admin-001", email: "admin@test.com", name: "Dev Admin", role: "ADMIN" as const, department: "IT", jobTitle: "Administrator" },
+    { azureAdId: "dev-hr-001", email: "hr@test.com", name: "Dev HR Manager", role: "HR" as const, department: "Human Resources", jobTitle: "HR Manager" },
+    { azureAdId: "dev-employee-001", email: "employee@test.com", name: "Dev Employee", role: "EMPLOYEE" as const, department: "Engineering", jobTitle: "Software Engineer" },
+  ];
+
+  for (const u of devUsers) {
+    const user = await prisma.user.upsert({
+      where: { email: u.email },
+      update: { role: u.role },
+      create: { ...u, isActive: true },
+    });
+    console.log(`Created dev user: ${user.email} (${user.role})`);
+  }
+
   // Create document categories
   const categories = [
     { name: "Identity Documents", description: "National ID, passport, visa, residency permits" },

@@ -104,8 +104,8 @@ export default function MyDocumentsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-[#1B4F72]">My Documents</h1>
+    <div className="space-y-6 animate-fade-in">
+      <h1 className="text-2xl font-bold text-gray-900">My Documents</h1>
 
       <Tabs defaultValue="all">
         <TabsList>

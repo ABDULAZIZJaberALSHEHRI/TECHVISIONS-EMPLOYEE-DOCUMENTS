@@ -133,9 +133,9 @@ export default function CategoriesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[#1B4F72]">Categories</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
         <Button
           onClick={() => {
             setEditingCategory(null);
@@ -164,7 +164,7 @@ export default function CategoriesPage() {
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
-                    <FolderOpen className="h-5 w-5 text-[#1B4F72]" />
+                    <FolderOpen className="h-5 w-5 text-blue-500" />
                     <h3 className="font-semibold text-sm">{cat.name}</h3>
                   </div>
                   <div className="flex gap-1">

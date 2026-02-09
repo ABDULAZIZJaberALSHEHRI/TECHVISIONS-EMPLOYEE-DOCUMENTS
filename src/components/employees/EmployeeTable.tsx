@@ -52,7 +52,7 @@ export function EmployeeTable({
         >
           <Avatar className="h-8 w-8">
             <AvatarImage src={emp.avatarUrl || undefined} />
-            <AvatarFallback className="bg-[#1B4F72] text-white text-xs">
+            <AvatarFallback className="bg-blue-500 text-white text-xs">
               {getInitials(emp.name)}
             </AvatarFallback>
           </Avatar>

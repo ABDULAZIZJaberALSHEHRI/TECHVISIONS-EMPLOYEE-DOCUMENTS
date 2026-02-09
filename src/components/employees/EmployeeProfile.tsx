@@ -45,7 +45,7 @@ export function EmployeeProfile({ user, assignments }: EmployeeProfileProps) {
         <CardContent className="flex items-center gap-6 p-6">
           <Avatar className="h-16 w-16">
             <AvatarImage src={user.avatarUrl || undefined} />
-            <AvatarFallback className="bg-[#1B4F72] text-white text-xl">
+            <AvatarFallback className="bg-blue-500 text-white text-xl">
               {getInitials(user.name)}
             </AvatarFallback>
           </Avatar>

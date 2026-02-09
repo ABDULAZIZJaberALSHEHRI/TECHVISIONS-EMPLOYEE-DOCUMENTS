@@ -129,7 +129,7 @@ export default function UserManagementPage() {
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
             <AvatarImage src={u.avatarUrl || undefined} />
-            <AvatarFallback className="bg-[#1B4F72] text-white text-xs">
+            <AvatarFallback className="bg-blue-500 text-white text-xs">
               {getInitials(u.name)}
             </AvatarFallback>
           </Avatar>
@@ -228,8 +228,8 @@ export default function UserManagementPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-[#1B4F72]">User Management</h1>
+    <div className="space-y-6 animate-fade-in">
+      <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
       <DataTable
         columns={columns}
         data={users}

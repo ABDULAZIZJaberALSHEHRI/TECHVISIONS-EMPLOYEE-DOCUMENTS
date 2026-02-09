@@ -82,8 +82,8 @@ export default function EmployeeDetailPage() {
   if (!user) return <div>Employee not found</div>;
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold text-[#1B4F72]">
+    <div className="animate-fade-in">
+      <h1 className="mb-6 text-2xl font-bold text-gray-900">
         Employee Profile
       </h1>
       <EmployeeProfile user={user} assignments={assignments} />

@@ -13,7 +13,6 @@ import {
   CheckCircle,
   Clock,
   AlertTriangle,
-  FileText,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -72,18 +71,21 @@ export function EmployeeDashboard() {
           title="Total Assigned"
           value={data.stats.totalAssigned}
           icon={<ClipboardList className="h-6 w-6" />}
+          delay={0}
         />
         <StatsCard
           title="Completed"
           value={data.stats.completed}
           icon={<CheckCircle className="h-6 w-6" />}
           color="green"
+          delay={60}
         />
         <StatsCard
           title="Pending"
           value={data.stats.pending}
           icon={<Clock className="h-6 w-6" />}
           color="yellow"
+          delay={120}
         />
         <StatsCard
           title="Overdue"
@@ -91,11 +93,12 @@ export function EmployeeDashboard() {
           icon={<AlertTriangle className="h-6 w-6" />}
           color="red"
           pulse={data.stats.overdue > 0}
+          delay={180}
         />
       </div>
 
       {/* Pending Requests */}
-      <Card>
+      <Card className="animate-fade-in-up animate-fill-both" style={{ animationDelay: "250ms" }}>
         <CardHeader>
           <CardTitle className="text-base">My Pending Requests</CardTitle>
         </CardHeader>
@@ -104,17 +107,18 @@ export function EmployeeDashboard() {
             <EmptyState
               title="All caught up!"
               description="You have no pending document requests."
-              icon={<CheckCircle className="h-8 w-8 text-green-500" />}
+              icon={<CheckCircle className="h-8 w-8 text-emerald-500" />}
             />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {data.pendingRequests.map((assignment) => (
+              {data.pendingRequests.map((assignment, i) => (
                 <Card
                   key={assignment.id}
                   className={cn(
-                    "cursor-pointer transition-shadow hover:shadow-md",
-                    assignment.status === "OVERDUE" && "border-red-300 bg-red-50/30"
+                    "cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 animate-fade-in-up animate-fill-both",
+                    assignment.status === "OVERDUE" && "border-red-200 bg-red-50/20"
                   )}
+                  style={{ animationDelay: `${300 + i * 60}ms` }}
                   onClick={() =>
                     router.push(
                       `/employee/requests/${assignment.request.id}`
@@ -126,14 +130,14 @@ export function EmployeeDashboard() {
                       <PriorityBadge priority={assignment.request.priority} />
                       <StatusBadge status={assignment.status} />
                     </div>
-                    <h4 className="mb-1 font-semibold text-sm line-clamp-2">
+                    <h4 className="mb-1 font-semibold text-sm text-gray-900 line-clamp-2">
                       {assignment.request.title}
                     </h4>
-                    <p className="mb-2 text-xs text-muted-foreground line-clamp-2">
+                    <p className="mb-2 text-xs text-gray-400 line-clamp-2">
                       {assignment.request.description}
                     </p>
                     {assignment.request.category && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-gray-400">
                         {assignment.request.category.name}
                       </p>
                     )}
@@ -142,7 +146,7 @@ export function EmployeeDashboard() {
                         "mt-2 text-xs font-medium",
                         assignment.status === "OVERDUE"
                           ? "text-red-600"
-                          : "text-muted-foreground"
+                          : "text-gray-400"
                       )}
                     >
                       Due: {format(new Date(assignment.dueDate), "MMM dd, yyyy")}
@@ -156,19 +160,19 @@ export function EmployeeDashboard() {
       </Card>
 
       {/* Recent Activity */}
-      <Card>
+      <Card className="animate-fade-in-up animate-fill-both" style={{ animationDelay: "400ms" }}>
         <CardHeader>
           <CardTitle className="text-base">My Recent Activity</CardTitle>
         </CardHeader>
         <CardContent>
           {data.recentActivity.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No recent activity</p>
+            <p className="text-sm text-gray-400">No recent activity</p>
           ) : (
             <div className="space-y-3">
               {data.recentActivity.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between border-b pb-2 last:border-0 cursor-pointer hover:bg-gray-50 rounded px-2 py-1"
+                  className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0 cursor-pointer hover:bg-blue-50/50 rounded-lg px-2 py-1.5 transition-all duration-150"
                   onClick={() =>
                     router.push(`/employee/requests/${item.request.id}`)
                   }
@@ -176,7 +180,7 @@ export function EmployeeDashboard() {
                   <div className="flex items-center gap-3">
                     <div>
                       {item.status === "APPROVED" && (
-                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <CheckCircle className="h-5 w-5 text-emerald-500" />
                       )}
                       {item.status === "REJECTED" && (
                         <AlertTriangle className="h-5 w-5 text-red-500" />
@@ -186,11 +190,11 @@ export function EmployeeDashboard() {
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-medium">
+                      <p className="text-sm font-medium text-gray-900">
                         {item.request.title}
                       </p>
                       {item.status === "REJECTED" && item.reviewNote && (
-                        <p className="text-xs text-red-600 line-clamp-1">
+                        <p className="text-xs text-red-500 line-clamp-1">
                           Reason: {item.reviewNote}
                         </p>
                       )}
