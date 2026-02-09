@@ -11,7 +11,15 @@
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "check-overdue": "ts-node scripts/check-overdue.ts"
+    "check-overdue": "ts-node scripts/check-overdue.ts",
+    "role:admin": "node scripts/promote-to-admin.js",
+    "role:hr": "node scripts/promote-to-hr.js",
+    "role:employee": "node scripts/demote-to-employee.js",
+    "role:manage": "node scripts/manage-user-roles.js",
+    "db:info": "node scripts/db-info.js",
+    "db:seed-test": "node scripts/seed-test-data.js",
+    "db:find-user": "node scripts/find-user.js",
+    "db:users": "node scripts/find-user.js"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
