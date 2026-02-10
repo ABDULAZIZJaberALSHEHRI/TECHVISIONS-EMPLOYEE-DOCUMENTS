@@ -38,6 +38,7 @@ function DeptHeadRequestsContent() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -55,6 +56,7 @@ function DeptHeadRequestsContent() {
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (status && status !== "ALL") params.set("status", status);
     if (priority && priority !== "ALL") params.set("priority", priority);
+    if (categoryId && categoryId !== "ALL") params.set("categoryId", categoryId);
 
     try {
       const res = await fetch(`/api/requests?${params}`);
@@ -68,7 +70,7 @@ function DeptHeadRequestsContent() {
     } finally {
       setLoading(false);
     }
-  }, [page, debouncedSearch, status, priority]);
+  }, [page, debouncedSearch, status, priority, categoryId]);
 
   useEffect(() => {
     fetchRequests();
@@ -91,10 +93,13 @@ function DeptHeadRequestsContent() {
         onStatusChange={setStatus}
         priority={priority}
         onPriorityChange={setPriority}
+        categoryId={categoryId}
+        onCategoryChange={setCategoryId}
         onClear={() => {
           setSearch("");
           setStatus("");
           setPriority("");
+          setCategoryId("");
         }}
       />
 

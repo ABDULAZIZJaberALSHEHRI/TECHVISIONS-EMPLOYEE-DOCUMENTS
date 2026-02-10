@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -11,6 +12,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 interface RequestFiltersProps {
   search: string;
   onSearchChange: (value: string) => void;
@@ -18,6 +24,8 @@ interface RequestFiltersProps {
   onStatusChange: (value: string) => void;
   priority: string;
   onPriorityChange: (value: string) => void;
+  categoryId?: string;
+  onCategoryChange?: (value: string) => void;
   onClear: () => void;
 }
 
@@ -28,9 +36,26 @@ export function RequestFilters({
   onStatusChange,
   priority,
   onPriorityChange,
+  categoryId,
+  onCategoryChange,
   onClear,
 }: RequestFiltersProps) {
-  const hasFilters = search || status || priority;
+  const [categories, setCategories] = useState<Category[]>([]);
+  const hasFilters = search || status || priority || (categoryId && categoryId !== "ALL");
+
+  useEffect(() => {
+    if (onCategoryChange) {
+      fetch("/api/categories")
+        .then((res) => res.json())
+        .then((res) => {
+          if (res.success) {
+            setCategories(
+              res.data.filter((c: Category & { isActive: boolean }) => c.isActive)
+            );
+          }
+        });
+    }
+  }, [onCategoryChange]);
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -66,6 +91,21 @@ export function RequestFilters({
           <SelectItem value="URGENT">Urgent</SelectItem>
         </SelectContent>
       </Select>
+      {onCategoryChange && (
+        <Select value={categoryId || "ALL"} onValueChange={onCategoryChange}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="All Categories" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Categories</SelectItem>
+            {categories.map((cat) => (
+              <SelectItem key={cat.id} value={cat.id}>
+                {cat.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
       {hasFilters && (
         <Button variant="ghost" size="sm" onClick={onClear}>
           <X className="mr-1 h-4 w-4" />

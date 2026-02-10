@@ -7,7 +7,20 @@
       "Bash(npx next dev -p 3001)",
       "Bash(node:*)",
       "Bash(npx eslint:*)",
-      "Bash(npx prisma validate:*)"
+      "Bash(npx prisma validate:*)",
+      "Bash(npm run dev:*)",
+      "Bash(docker run:*)",
+      "Bash(docker version:*)",
+      "Bash(docker info:*)",
+      "Bash(docker context:*)",
+      "Bash(docker rm:*)",
+      "Bash(timeout 30 bash:*)",
+      "Bash(docker exec:*)",
+      "Bash(npx prisma:*)",
+      "Bash(npm run db:seed:*)",
+      "Bash(taskkill:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)"
     ]
   }
 }

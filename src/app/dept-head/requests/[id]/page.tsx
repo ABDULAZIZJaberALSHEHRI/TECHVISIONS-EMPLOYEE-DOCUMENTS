@@ -14,6 +14,13 @@ import { Calendar, Users, Download, Bell, FileText, Paperclip } from "lucide-rea
 import { format } from "date-fns";
 import type { Priority, RequestStatus, AssignmentStatus } from "@prisma/client";
 
+interface DocumentSlot {
+  id: string;
+  name: string;
+  templateId: string | null;
+  sortOrder: number;
+}
+
 interface RequestDetail {
   id: string;
   title: string;
@@ -29,6 +36,7 @@ interface RequestDetail {
   createdAt: string;
   category: { id: string; name: string } | null;
   createdBy: { id: string; name: string; email: string };
+  documentSlots?: DocumentSlot[];
   attachments: {
     id: string;
     fileName: string;
@@ -207,6 +215,33 @@ export default function DeptHeadRequestDetailPage() {
                   <FileText className="mr-1 h-4 w-4" />
                   {att.fileName}
                 </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Document Slots */}
+      {request.documentSlots && request.documentSlots.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Required Documents ({request.documentSlots.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {request.documentSlots.map((slot, index) => (
+                <div
+                  key={slot.id}
+                  className="flex items-center gap-3 rounded-lg border p-3"
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">
+                    {index + 1}
+                  </span>
+                  <span className="text-sm font-medium">{slot.name}</span>
+                </div>
               ))}
             </div>
           </CardContent>

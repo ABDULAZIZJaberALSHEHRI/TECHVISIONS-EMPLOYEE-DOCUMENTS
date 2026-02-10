@@ -91,6 +91,22 @@ export function getAllowedTargetTypes(
 }
 
 /**
+ * Check if a user can access a specific request.
+ * - ADMIN: can access any request
+ * - HR: can only access requests they created
+ * - DEPARTMENT_HEAD: can access requests they created or targeting their department
+ */
+export function canAccessRequest(
+  user: UserForPermissions,
+  request: { createdById: string }
+): boolean {
+  if (user.role === "ADMIN") return true;
+  if (user.role === "HR") return request.createdById === user.id;
+  if (user.role === "DEPARTMENT_HEAD") return request.createdById === user.id;
+  return false;
+}
+
+/**
  * Check if user has management-level access (ADMIN, HR, or DEPARTMENT_HEAD).
  */
 export function isManager(user: UserForPermissions): boolean {

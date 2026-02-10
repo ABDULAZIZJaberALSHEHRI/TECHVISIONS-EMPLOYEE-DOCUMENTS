@@ -37,6 +37,14 @@ export async function GET(
       );
     }
 
+    // HR can only download documents from their own requests
+    if (user.role === "HR" && docRequest.createdById !== user.id) {
+      return NextResponse.json(
+        { success: false, error: "Access denied" },
+        { status: 403 }
+      );
+    }
+
     const uploadDir = getUploadDir();
     const archive = archiver("zip", { zlib: { level: 5 } });
     const passthrough = new PassThrough();

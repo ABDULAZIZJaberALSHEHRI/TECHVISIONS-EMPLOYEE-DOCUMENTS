@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     const requestId = searchParams.get("requestId") || undefined;
     const status = searchParams.get("status") || undefined;
     const search = searchParams.get("search") || undefined;
+    const categoryId = searchParams.get("categoryId") || undefined;
 
     // Permission check for department filter
     if (department && !canViewTrackingMatrix(user, department)) {
@@ -55,6 +56,15 @@ export async function GET(request: NextRequest) {
       assignmentWhere.status = status;
     }
 
+    // HR can only see assignments for requests they created
+    const requestWhere: Record<string, unknown> = { status: "OPEN" };
+    if (user.role === "HR") {
+      requestWhere.createdById = user.id;
+    }
+    if (categoryId) {
+      requestWhere.categoryId = categoryId;
+    }
+
     // Get employees with their assignments
     const employees = await prisma.user.findMany({
       where: employeeWhere,
@@ -66,7 +76,7 @@ export async function GET(request: NextRequest) {
         assignments: {
           where: {
             ...assignmentWhere,
-            request: { status: "OPEN" },
+            request: requestWhere,
           },
           select: {
             id: true,

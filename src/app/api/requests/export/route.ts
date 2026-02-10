@@ -14,6 +14,11 @@ export async function GET(request: NextRequest) {
     const where: Record<string, unknown> = {};
     if (requestId) where.id = requestId;
 
+    // HR can only export their own requests
+    if (user.role === "HR") {
+      where.createdById = user.id;
+    }
+
     const requests = await prisma.documentRequest.findMany({
       where,
       include: {

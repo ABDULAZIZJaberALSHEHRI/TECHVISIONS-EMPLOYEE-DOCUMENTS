@@ -8,6 +8,11 @@ import { canCreateRequestForDepartment, getAllowedTargetTypes } from "@/lib/perm
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { z } from "zod";
 
+const documentSlotSchema = z.object({
+  name: z.string().min(1, "Document name is required"),
+  templateId: z.string().nullable().optional(),
+});
+
 const createRequestSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
   description: z.string().min(1, "Description is required"),
@@ -22,6 +27,7 @@ const createRequestSchema = z.object({
   assignAll: z.boolean().optional(),
   targetType: z.enum(["ALL_EMPLOYEES", "DEPARTMENT", "SPECIFIC"]).optional(),
   targetDepartments: z.array(z.string()).optional(),
+  documentSlots: z.array(documentSlotSchema).min(1).max(5).optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -41,6 +47,9 @@ export async function GET(request: NextRequest) {
 
     if (user.role === "EMPLOYEE") {
       where.assignments = { some: { employeeId: user.id } };
+    } else if (user.role === "HR") {
+      // HR can only see requests they created
+      where.createdById = user.id;
     } else if (user.role === "DEPARTMENT_HEAD" && user.managedDepartment) {
       // Department heads see requests they created or that target their department
       where.OR = [
@@ -78,6 +87,7 @@ export async function GET(request: NextRequest) {
         include: {
           category: { select: { id: true, name: true } },
           createdBy: { select: { id: true, name: true, email: true } },
+          documentSlots: { orderBy: { sortOrder: "asc" } },
           _count: { select: { assignments: true, attachments: true } },
           assignments: user.role === "EMPLOYEE"
             ? {
@@ -140,6 +150,7 @@ export async function POST(request: NextRequest) {
         assignAll: formData.get("assignAll") === "true",
         targetType: (formData.get("targetType") as "ALL_EMPLOYEES" | "DEPARTMENT" | "SPECIFIC") || undefined,
         targetDepartments: JSON.parse((formData.get("targetDepartments") as string) || "[]"),
+        documentSlots: JSON.parse((formData.get("documentSlots") as string) || "[]"),
       };
       attachmentFiles = formData.getAll("attachments") as File[];
       const tpl = formData.get("templateFile");
@@ -164,6 +175,7 @@ export async function POST(request: NextRequest) {
       assignAll,
       targetType: rawTargetType,
       targetDepartments,
+      documentSlots,
       ...requestData
     } = parsed.data;
 
@@ -284,6 +296,18 @@ export async function POST(request: NextRequest) {
           dueDate: new Date(requestData.deadline),
         })),
       });
+
+      // Create document slots if provided
+      if (documentSlots && documentSlots.length > 0) {
+        await tx.documentSlot.createMany({
+          data: documentSlots.map((slot, index) => ({
+            requestId: docRequest.id,
+            name: slot.name,
+            templateId: slot.templateId || null,
+            sortOrder: index,
+          })),
+        });
+      }
 
       return docRequest;
     });

@@ -95,12 +95,8 @@ export async function POST(
       );
     }
 
-    // Only creator, ADMIN, or HR can upload template
-    if (
-      user.role !== "ADMIN" &&
-      user.role !== "HR" &&
-      docRequest.createdById !== user.id
-    ) {
+    // Only creator or ADMIN can upload template (HR must be the creator)
+    if (user.role !== "ADMIN" && docRequest.createdById !== user.id) {
       return NextResponse.json(
         { success: false, error: "Not authorized to modify this request" },
         { status: 403 }
@@ -180,11 +176,7 @@ export async function DELETE(
       );
     }
 
-    if (
-      user.role !== "ADMIN" &&
-      user.role !== "HR" &&
-      docRequest.createdById !== user.id
-    ) {
+    if (user.role !== "ADMIN" && docRequest.createdById !== user.id) {
       return NextResponse.json(
         { success: false, error: "Not authorized to modify this request" },
         { status: 403 }

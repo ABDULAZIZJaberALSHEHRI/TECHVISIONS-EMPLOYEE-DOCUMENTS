@@ -4,6 +4,11 @@ import { requireAuth, requireRole, isNextResponse } from "@/lib/auth-guard";
 import { createAuditLog, getClientIp } from "@/lib/audit";
 import { z } from "zod";
 
+const documentSlotSchema = z.object({
+  name: z.string().min(1, "Document name is required"),
+  templateId: z.string().nullable().optional(),
+});
+
 const updateRequestSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().min(1).optional(),
@@ -14,6 +19,7 @@ const updateRequestSchema = z.object({
   acceptedFormats: z.string().optional(),
   maxFileSizeMb: z.number().min(1).max(100).optional(),
   notes: z.string().optional(),
+  documentSlots: z.array(documentSlotSchema).min(1).max(5).optional(),
 });
 
 export async function GET(
@@ -30,6 +36,7 @@ export async function GET(
       include: {
         category: true,
         createdBy: { select: { id: true, name: true, email: true } },
+        documentSlots: { orderBy: { sortOrder: "asc" } },
         attachments: true,
         assignments: {
           include: {
@@ -59,6 +66,14 @@ export async function GET(
       return NextResponse.json(
         { success: false, error: "Request not found" },
         { status: 404 }
+      );
+    }
+
+    // HR can only see requests they created
+    if (user.role === "HR" && docRequest.createdById !== user.id) {
+      return NextResponse.json(
+        { success: false, error: "Access denied" },
+        { status: 403 }
       );
     }
 
@@ -125,23 +140,42 @@ export async function PATCH(
       );
     }
 
-    // DEPARTMENT_HEAD can only update their own requests
-    if (user.role === "DEPARTMENT_HEAD" && existing.createdById !== user.id) {
+    // HR and DEPARTMENT_HEAD can only update their own requests
+    if (
+      (user.role === "HR" || user.role === "DEPARTMENT_HEAD") &&
+      existing.createdById !== user.id
+    ) {
       return NextResponse.json(
         { success: false, error: "You can only update your own requests" },
         { status: 403 }
       );
     }
 
-    const updateData: Record<string, unknown> = { ...parsed.data };
-    if (parsed.data.deadline) {
-      updateData.deadline = new Date(parsed.data.deadline);
+    const { documentSlots, ...restData } = parsed.data;
+    const updateData: Record<string, unknown> = { ...restData };
+    if (restData.deadline) {
+      updateData.deadline = new Date(restData.deadline);
     }
 
     const updated = await prisma.documentRequest.update({
       where: { id },
       data: updateData,
     });
+
+    // Update document slots if provided (replace all)
+    if (documentSlots) {
+      await prisma.documentSlot.deleteMany({ where: { requestId: id } });
+      if (documentSlots.length > 0) {
+        await prisma.documentSlot.createMany({
+          data: documentSlots.map((slot, index) => ({
+            requestId: id,
+            name: slot.name,
+            templateId: slot.templateId || null,
+            sortOrder: index,
+          })),
+        });
+      }
+    }
 
     // If deadline changed, update all assignment due dates
     if (parsed.data.deadline) {

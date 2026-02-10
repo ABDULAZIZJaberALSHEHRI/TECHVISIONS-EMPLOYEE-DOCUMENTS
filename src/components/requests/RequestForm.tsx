@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { EmployeeSelector } from "./EmployeeSelector";
-import { Loader2, Upload, X, FileText, Users } from "lucide-react";
+import { Loader2, Upload, X, FileText, Users, Plus, Trash2 } from "lucide-react";
 
 interface Category {
   id: string;
@@ -39,6 +39,9 @@ export function RequestForm({ redirectPath = "/hr/requests" }: RequestFormProps)
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const [templateFile, setTemplateFile] = useState<File | null>(null);
   const [employeeCount, setEmployeeCount] = useState<number | null>(null);
+  const [documentSlots, setDocumentSlots] = useState<{ name: string; templateId: string }[]>([
+    { name: "", templateId: "" },
+  ]);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -112,6 +115,12 @@ export function RequestForm({ redirectPath = "/hr/requests" }: RequestFormProps)
 
     if (templateFile) {
       formData.set("templateFile", templateFile);
+    }
+
+    // Add document slots (filter out empty names)
+    const validSlots = documentSlots.filter((s) => s.name.trim());
+    if (validSlots.length > 0) {
+      formData.set("documentSlots", JSON.stringify(validSlots));
     }
 
     try {
@@ -314,6 +323,64 @@ export function RequestForm({ redirectPath = "/hr/requests" }: RequestFormProps)
                 className="cursor-pointer"
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Required Documents */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between text-base">
+              <span>Required Documents</span>
+              <Badge variant="secondary">{documentSlots.length} / 5</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Define which documents employees need to submit (1 to 5).
+            </p>
+            {documentSlots.map((slot, index) => (
+              <div key={index} className="flex items-center gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">
+                  {index + 1}
+                </span>
+                <Input
+                  placeholder={`Document name (e.g., National ID Copy)`}
+                  value={slot.name}
+                  onChange={(e) => {
+                    const updated = [...documentSlots];
+                    updated[index] = { ...updated[index], name: e.target.value };
+                    setDocumentSlots(updated);
+                  }}
+                  required
+                />
+                {documentSlots.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 text-red-500 hover:text-red-700"
+                    onClick={() =>
+                      setDocumentSlots(documentSlots.filter((_, i) => i !== index))
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            {documentSlots.length < 5 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setDocumentSlots([...documentSlots, { name: "", templateId: "" }])
+                }
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                Add Document Slot
+              </Button>
+            )}
           </CardContent>
         </Card>
 

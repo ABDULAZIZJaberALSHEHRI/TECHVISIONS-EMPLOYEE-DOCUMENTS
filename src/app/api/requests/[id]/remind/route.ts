@@ -32,6 +32,14 @@ export async function POST(
       );
     }
 
+    // HR can only remind for their own requests
+    if (user.role === "HR" && docRequest.createdById !== user.id) {
+      return NextResponse.json(
+        { success: false, error: "Access denied" },
+        { status: 403 }
+      );
+    }
+
     const pendingAssignments = docRequest.assignments;
 
     if (pendingAssignments.length === 0) {

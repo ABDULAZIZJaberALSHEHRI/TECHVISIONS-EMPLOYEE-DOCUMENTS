@@ -45,8 +45,12 @@ export async function POST(request: NextRequest) {
       where.status = { in: ["PENDING", "OVERDUE"] };
     }
 
-    // Only open requests
-    where.request = { status: "OPEN" };
+    // Only open requests (HR can only send reminders for their own requests)
+    const requestFilter: Record<string, unknown> = { status: "OPEN" };
+    if (user.role === "HR") {
+      requestFilter.createdById = user.id;
+    }
+    where.request = requestFilter;
 
     // Department filter with permission check
     const accessibleDepts = getAccessibleDepartments(user);

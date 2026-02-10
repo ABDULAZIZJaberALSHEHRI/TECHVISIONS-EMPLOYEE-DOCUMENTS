@@ -40,7 +40,7 @@ export async function PATCH(
       where: { id },
       include: {
         employee: { select: { id: true, name: true, email: true } },
-        request: { select: { id: true, title: true } },
+        request: { select: { id: true, title: true, createdById: true } },
       },
     });
 
@@ -48,6 +48,14 @@ export async function PATCH(
       return NextResponse.json(
         { success: false, error: "Assignment not found" },
         { status: 404 }
+      );
+    }
+
+    // HR can only review assignments on their own requests
+    if (user.role === "HR" && assignment.request.createdById !== user.id) {
+      return NextResponse.json(
+        { success: false, error: "Access denied" },
+        { status: 403 }
       );
     }
 

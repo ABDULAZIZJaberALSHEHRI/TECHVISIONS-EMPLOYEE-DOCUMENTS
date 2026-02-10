@@ -76,9 +76,12 @@ export function TrackingMatrix() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
 
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+
   // Filters
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
 
@@ -97,11 +100,28 @@ export function TrackingMatrix() {
     }
   }, []);
 
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await fetch("/api/categories");
+      const data = await res.json();
+      if (data.success) {
+        setCategories(
+          data.data
+            .filter((c: { isActive: boolean }) => c.isActive)
+            .map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }))
+        );
+      }
+    } catch (err) {
+      console.error("Failed to fetch categories:", err);
+    }
+  }, []);
+
   const fetchMatrix = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
     if (departmentFilter && departmentFilter !== "ALL") params.set("department", departmentFilter);
     if (statusFilter && statusFilter !== "ALL") params.set("status", statusFilter);
+    if (categoryFilter && categoryFilter !== "ALL") params.set("categoryId", categoryFilter);
     if (debouncedSearch) params.set("search", debouncedSearch);
 
     try {
@@ -116,11 +136,12 @@ export function TrackingMatrix() {
     } finally {
       setLoading(false);
     }
-  }, [departmentFilter, statusFilter, debouncedSearch]);
+  }, [departmentFilter, statusFilter, categoryFilter, debouncedSearch]);
 
   useEffect(() => {
     fetchDepartments();
-  }, [fetchDepartments]);
+    fetchCategories();
+  }, [fetchDepartments, fetchCategories]);
 
   useEffect(() => {
     fetchMatrix();
@@ -356,6 +377,19 @@ export function TrackingMatrix() {
                 <SelectItem value="APPROVED">Approved</SelectItem>
                 <SelectItem value="REJECTED">Rejected</SelectItem>
                 <SelectItem value="OVERDUE">Overdue</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Categories</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <div className="flex gap-2 ml-auto">
