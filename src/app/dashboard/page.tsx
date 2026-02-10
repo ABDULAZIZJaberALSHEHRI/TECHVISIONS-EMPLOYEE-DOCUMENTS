@@ -11,6 +11,8 @@ export default async function DashboardPage() {
 
   if (role === "ADMIN" || role === "HR") {
     redirect("/hr/dashboard");
+  } else if (role === "DEPARTMENT_HEAD") {
+    redirect("/dept-head/dashboard");
   } else {
     redirect("/employee/dashboard");
   }

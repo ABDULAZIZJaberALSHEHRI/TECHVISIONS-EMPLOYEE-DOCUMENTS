@@ -12,6 +12,7 @@ declare module "next-auth" {
       email: string;
       role: Role;
       department: string | null;
+      managedDepartment: string | null;
       image?: string | null;
     };
   }
@@ -22,6 +23,7 @@ declare module "next-auth/jwt" {
     id: string;
     role: Role;
     department: string | null;
+    managedDepartment: string | null;
   }
 }
 
@@ -149,12 +151,13 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider === "dev-credentials" && user) {
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id },
-          select: { id: true, role: true, department: true },
+          select: { id: true, role: true, department: true, managedDepartment: true },
         });
         if (dbUser) {
           token.id = dbUser.id;
           token.role = dbUser.role;
           token.department = dbUser.department;
+          token.managedDepartment = dbUser.managedDepartment;
         }
         return token;
       }
@@ -173,6 +176,7 @@ export const authOptions: NextAuthOptions = {
             id: true,
             role: true,
             department: true,
+            managedDepartment: true,
           },
         });
 
@@ -180,6 +184,7 @@ export const authOptions: NextAuthOptions = {
           token.id = dbUser.id;
           token.role = dbUser.role;
           token.department = dbUser.department;
+          token.managedDepartment = dbUser.managedDepartment;
         }
       }
       return token;
@@ -189,6 +194,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id;
         session.user.role = token.role;
         session.user.department = token.department;
+        session.user.managedDepartment = token.managedDepartment;
       }
       return session;
     },

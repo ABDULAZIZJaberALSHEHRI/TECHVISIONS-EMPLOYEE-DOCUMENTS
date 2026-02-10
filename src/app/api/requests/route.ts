@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth, requireRole, isNextResponse } from "@/lib/auth-guard";
 import { createAuditLog, getClientIp } from "@/lib/audit";
 import { notifyNewRequest } from "@/lib/notifications";
-import { saveAttachment } from "@/lib/upload";
+import { saveAttachment, saveTemplateFile, validateTemplateFile } from "@/lib/upload";
+import { canCreateRequestForDepartment, getAllowedTargetTypes } from "@/lib/permissions";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { z } from "zod";
 
@@ -19,6 +20,8 @@ const createRequestSchema = z.object({
   employeeIds: z.array(z.string()).optional(),
   department: z.string().nullable().optional(),
   assignAll: z.boolean().optional(),
+  targetType: z.enum(["ALL_EMPLOYEES", "DEPARTMENT", "SPECIFIC"]).optional(),
+  targetDepartments: z.array(z.string()).optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -38,16 +41,35 @@ export async function GET(request: NextRequest) {
 
     if (user.role === "EMPLOYEE") {
       where.assignments = { some: { employeeId: user.id } };
+    } else if (user.role === "DEPARTMENT_HEAD" && user.managedDepartment) {
+      // Department heads see requests they created or that target their department
+      where.OR = [
+        { createdById: user.id },
+        {
+          assignments: {
+            some: {
+              employee: { department: user.managedDepartment },
+            },
+          },
+        },
+      ];
     }
 
     if (status) where.status = status;
     if (priority) where.priority = priority;
     if (categoryId) where.categoryId = categoryId;
     if (search) {
-      where.OR = [
+      const searchFilter = [
         { title: { contains: search } },
         { description: { contains: search } },
       ];
+      if (where.OR) {
+        // Combine existing OR with search OR using AND
+        where.AND = [{ OR: where.OR }, { OR: searchFilter }];
+        delete where.OR;
+      } else {
+        where.OR = searchFilter;
+      }
     }
 
     const [requests, total] = await Promise.all([
@@ -92,12 +114,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireRole(["ADMIN", "HR"]);
+    const user = await requireRole(["ADMIN", "HR", "DEPARTMENT_HEAD"]);
     if (isNextResponse(user)) return user;
 
     const contentType = request.headers.get("content-type") || "";
     let data: z.infer<typeof createRequestSchema>;
     let attachmentFiles: File[] = [];
+    let templateFile: File | null = null;
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
@@ -115,8 +138,14 @@ export async function POST(request: NextRequest) {
         employeeIds: JSON.parse((formData.get("employeeIds") as string) || "[]"),
         department: (formData.get("department") as string) || null,
         assignAll: formData.get("assignAll") === "true",
+        targetType: (formData.get("targetType") as "ALL_EMPLOYEES" | "DEPARTMENT" | "SPECIFIC") || undefined,
+        targetDepartments: JSON.parse((formData.get("targetDepartments") as string) || "[]"),
       };
       attachmentFiles = formData.getAll("attachments") as File[];
+      const tpl = formData.get("templateFile");
+      if (tpl && tpl instanceof File && tpl.size > 0) {
+        templateFile = tpl;
+      }
     } else {
       data = await request.json();
     }
@@ -129,19 +158,92 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { employeeIds, department, assignAll, ...requestData } = parsed.data;
+    const {
+      employeeIds,
+      department,
+      assignAll,
+      targetType: rawTargetType,
+      targetDepartments,
+      ...requestData
+    } = parsed.data;
 
+    // Determine target type - backward compatible
+    const targetType = rawTargetType || (assignAll ? "ALL_EMPLOYEES" : department ? "DEPARTMENT" : "SPECIFIC");
+
+    // Permission check for target type
+    const allowedTypes = getAllowedTargetTypes(user);
+    if (!allowedTypes.includes(targetType)) {
+      return NextResponse.json(
+        { success: false, error: "You are not allowed to use this target type" },
+        { status: 403 }
+      );
+    }
+
+    // DEPARTMENT_HEAD permission check for department targeting
+    if (user.role === "DEPARTMENT_HEAD") {
+      if (targetType === "DEPARTMENT" && targetDepartments && targetDepartments.length > 0) {
+        for (const dept of targetDepartments) {
+          if (!canCreateRequestForDepartment(user, dept)) {
+            return NextResponse.json(
+              { success: false, error: `You can only create requests for your department (${user.managedDepartment})` },
+              { status: 403 }
+            );
+          }
+        }
+      } else if (targetType === "SPECIFIC") {
+        // Verify selected employees are in their department
+        if (employeeIds && employeeIds.length > 0) {
+          const employees = await prisma.user.findMany({
+            where: { id: { in: employeeIds } },
+            select: { id: true, department: true },
+          });
+          const outsideDept = employees.filter((e) => e.department !== user.managedDepartment);
+          if (outsideDept.length > 0) {
+            return NextResponse.json(
+              { success: false, error: "You can only assign requests to employees in your department" },
+              { status: 403 }
+            );
+          }
+        }
+      }
+    }
+
+    // Validate template file
+    if (templateFile) {
+      const validationError = validateTemplateFile(templateFile);
+      if (validationError) {
+        return NextResponse.json(
+          { success: false, error: validationError },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Resolve target employees
     let targetEmployeeIds: string[] = employeeIds || [];
 
-    if (assignAll) {
+    if (targetType === "ALL_EMPLOYEES") {
       const employees = await prisma.user.findMany({
-        where: { role: "EMPLOYEE", isActive: true },
+        where: { isActive: true, role: { not: "ADMIN" } },
         select: { id: true },
       });
       targetEmployeeIds = employees.map((e) => e.id);
-    } else if (department) {
+    } else if (targetType === "DEPARTMENT") {
+      const depts = targetDepartments && targetDepartments.length > 0
+        ? targetDepartments
+        : department
+          ? [department]
+          : [];
+
+      if (depts.length === 0) {
+        return NextResponse.json(
+          { success: false, error: "At least one department is required for department targeting" },
+          { status: 400 }
+        );
+      }
+
       const employees = await prisma.user.findMany({
-        where: { role: "EMPLOYEE", isActive: true, department },
+        where: { isActive: true, department: { in: depts } },
         select: { id: true },
       });
       targetEmployeeIds = employees.map((e) => e.id);
@@ -166,6 +268,12 @@ export async function POST(request: NextRequest) {
           acceptedFormats: requestData.acceptedFormats || null,
           maxFileSizeMb: requestData.maxFileSizeMb || 10,
           notes: requestData.notes || null,
+          targetType,
+          targetDepartments: targetDepartments && targetDepartments.length > 0
+            ? JSON.stringify(targetDepartments)
+            : department
+              ? JSON.stringify([department])
+              : null,
         },
       });
 
@@ -179,6 +287,18 @@ export async function POST(request: NextRequest) {
 
       return docRequest;
     });
+
+    // Save template file outside transaction
+    if (templateFile) {
+      const saved = await saveTemplateFile(templateFile, result.id);
+      await prisma.documentRequest.update({
+        where: { id: result.id },
+        data: {
+          templateUrl: saved.filePath,
+          templateName: saved.fileName,
+        },
+      });
+    }
 
     // Save attachments outside transaction
     for (const file of attachmentFiles) {
@@ -218,7 +338,9 @@ export async function POST(request: NextRequest) {
       entityId: result.id,
       details: {
         title: result.title,
+        targetType,
         assignedCount: targetEmployeeIds.length,
+        hasTemplate: !!templateFile,
       },
       ipAddress: getClientIp(request),
     });

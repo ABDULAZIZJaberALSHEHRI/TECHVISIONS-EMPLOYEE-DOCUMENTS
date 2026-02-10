@@ -6,12 +6,12 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
-    // Admin routes
+    // Admin routes - ADMIN only
     if (path.startsWith("/admin") && token?.role !== "ADMIN") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
-    // HR routes (accessible by HR and ADMIN)
+    // HR routes - accessible by HR and ADMIN
     if (
       path.startsWith("/hr") &&
       token?.role !== "HR" &&
@@ -20,7 +20,16 @@ export default withAuth(
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
-    // Employee routes (accessible by EMPLOYEE only — HR/Admin have their own views)
+    // Department Head routes - accessible by DEPARTMENT_HEAD and ADMIN
+    if (
+      path.startsWith("/dept-head") &&
+      token?.role !== "DEPARTMENT_HEAD" &&
+      token?.role !== "ADMIN"
+    ) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+
+    // Employee routes - accessible by any authenticated user
     if (path.startsWith("/employee") && token?.role === undefined) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
@@ -43,6 +52,7 @@ export const config = {
     "/hr/:path*",
     "/employee/:path*",
     "/admin/:path*",
+    "/dept-head/:path*",
     "/api/requests/:path*",
     "/api/assignments/:path*",
     "/api/documents/:path*",
@@ -52,5 +62,7 @@ export const config = {
     "/api/audit-logs/:path*",
     "/api/settings/:path*",
     "/api/dashboard/:path*",
+    "/api/departments/:path*",
+    "/api/tracking/:path*",
   ],
 };

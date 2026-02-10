@@ -10,6 +10,7 @@ datasource db {
 enum Role {
   ADMIN
   HR
+  DEPARTMENT_HEAD
   EMPLOYEE
 }
 
@@ -34,6 +35,12 @@ enum AssignmentStatus {
   OVERDUE
 }
 
+enum TargetType {
+  ALL_EMPLOYEES
+  DEPARTMENT
+  SPECIFIC
+}
+
 enum NotificationType {
   NEW_REQUEST
   REMINDER
@@ -53,11 +60,12 @@ model User {
   department    String?
   jobTitle      String?   @map("job_title")
   role          Role      @default(EMPLOYEE)
-  isActive      Boolean   @default(true) @map("is_active")
-  avatarUrl     String?   @map("avatar_url") @db.Text
-  lastLoginAt   DateTime? @map("last_login_at")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  isActive          Boolean   @default(true) @map("is_active")
+  managedDepartment String?   @map("managed_department")
+  avatarUrl         String?   @map("avatar_url") @db.Text
+  lastLoginAt       DateTime? @map("last_login_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   createdRequests     DocumentRequest[]   @relation("CreatedBy")
   assignments         RequestAssignment[] @relation("Employee")
@@ -66,6 +74,9 @@ model User {
   notifications       Notification[]
   auditLogs           AuditLog[]
 
+  @@index([email])
+  @@index([department])
+  @@index([role])
   @@map("users")
 }
 
@@ -83,19 +94,23 @@ model Category {
 }
 
 model DocumentRequest {
-  id              String        @id @default(cuid())
-  title           String
-  description     String        @db.Text
-  categoryId      String?       @map("category_id")
-  createdById     String        @map("created_by_id")
-  deadline        DateTime
-  priority        Priority      @default(MEDIUM)
-  status          RequestStatus @default(OPEN)
-  acceptedFormats String?       @map("accepted_formats")
-  maxFileSizeMb   Int           @default(10) @map("max_file_size_mb")
-  notes           String?       @db.Text
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
+  id                String        @id @default(cuid())
+  title             String
+  description       String        @db.Text
+  categoryId        String?       @map("category_id")
+  createdById       String        @map("created_by_id")
+  deadline          DateTime
+  priority          Priority      @default(MEDIUM)
+  status            RequestStatus @default(OPEN)
+  acceptedFormats   String?       @map("accepted_formats")
+  maxFileSizeMb     Int           @default(10) @map("max_file_size_mb")
+  notes             String?       @db.Text
+  templateUrl       String?       @map("template_url")
+  templateName      String?       @map("template_name")
+  targetType        TargetType    @default(SPECIFIC) @map("target_type")
+  targetDepartments String?       @map("target_departments") @db.Text
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
 
   category    Category?           @relation(fields: [categoryId], references: [id])
   createdBy   User                @relation("CreatedBy", fields: [createdById], references: [id])
@@ -105,6 +120,7 @@ model DocumentRequest {
   @@index([status])
   @@index([createdById])
   @@index([deadline])
+  @@index([categoryId])
   @@map("document_requests")
 }
 
@@ -131,6 +147,7 @@ model RequestAssignment {
   reviewedById   String?          @map("reviewed_by_id")
   reviewNote     String?          @map("review_note") @db.Text
   reviewedAt     DateTime?        @map("reviewed_at")
+  submittedAt    DateTime?        @map("submitted_at")
   reminderCount  Int              @default(0) @map("reminder_count")
   lastReminderAt DateTime?        @map("last_reminder_at")
   createdAt      DateTime         @default(now()) @map("created_at")

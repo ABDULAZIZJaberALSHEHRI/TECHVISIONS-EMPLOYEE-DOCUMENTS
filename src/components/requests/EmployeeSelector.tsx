@@ -17,22 +17,35 @@ interface Employee {
 interface EmployeeSelectorProps {
   selectedIds: string[];
   onChange: (ids: string[]) => void;
+  departmentFilter?: string;
 }
 
-export function EmployeeSelector({ selectedIds, onChange }: EmployeeSelectorProps) {
+export function EmployeeSelector({ selectedIds, onChange, departmentFilter }: EmployeeSelectorProps) {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/users?pageSize=500&role=EMPLOYEE&isActive=true")
+    const params = new URLSearchParams({ pageSize: "500", isActive: "true" });
+    if (departmentFilter) {
+      // Use department members API for filtered results
+      fetch(`/api/departments/members?department=${encodeURIComponent(departmentFilter)}`)
+        .then((res) => res.json())
+        .then((res) => {
+          if (res.success) setEmployees(res.employees);
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false));
+      return;
+    }
+    fetch(`/api/users?${params}`)
       .then((res) => res.json())
       .then((res) => {
         if (res.success) setEmployees(res.data);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [departmentFilter]);
 
   const filtered = employees.filter(
     (e) =>

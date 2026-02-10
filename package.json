@@ -14,6 +14,7 @@
     "check-overdue": "ts-node scripts/check-overdue.ts",
     "role:admin": "node scripts/promote-to-admin.js",
     "role:hr": "node scripts/promote-to-hr.js",
+    "role:dept-head": "node scripts/promote-to-dept-head.js",
     "role:employee": "node scripts/demote-to-employee.js",
     "role:manage": "node scripts/manage-user-roles.js",
     "db:info": "node scripts/db-info.js",

@@ -192,3 +192,50 @@ export async function sendReminderEmail(
   `;
   return sendEmail(to, `Reminder: ${requestTitle}`, html);
 }
+
+export async function sendBulkReminderEmail(
+  employees: { email: string; name: string }[],
+  requestTitle: string,
+  requestDescription: string,
+  deadline: string | null,
+  requestId: string,
+  hasTemplate: boolean
+): Promise<{ sent: number; failed: number }> {
+  let sent = 0;
+  let failed = 0;
+
+  for (const emp of employees) {
+    const templateSection = hasTemplate
+      ? `<p style="margin:12px 0;"><strong>A template is available.</strong> Log in to download it before submitting.</p>`
+      : "";
+
+    const deadlineSection = deadline
+      ? `<p style="margin:8px 0 0;color:#E74C3C;font-weight:bold;">Deadline: ${deadline}</p>`
+      : "";
+
+    const html = `
+      <h2 style="color:#F39C12;margin-top:0;">Action Required: Document Request</h2>
+      <p>Hello ${emp.name},</p>
+      <p>This is a reminder that the following document request requires your attention:</p>
+      <div style="background-color:#fef9e7;border-left:4px solid #F39C12;padding:15px;margin:20px 0;">
+        <p style="margin:0;font-weight:bold;font-size:16px;">${requestTitle}</p>
+        <p style="margin:8px 0 0;color:#555;font-size:14px;">${requestDescription}</p>
+        ${deadlineSection}
+      </div>
+      ${templateSection}
+      <p>Please submit the required documents as soon as possible.</p>
+      <a href="${APP_URL}/employee/requests/${requestId}" style="display:inline-block;background-color:#F39C12;color:#ffffff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;margin:10px 0;">Upload Documents</a>
+      <p style="margin-top:20px;font-size:13px;color:#888;">If you have already submitted, please disregard this message.</p>
+    `;
+
+    const success = await sendEmail(
+      emp.email,
+      `Reminder: ${requestTitle}`,
+      html
+    );
+    if (success) sent++;
+    else failed++;
+  }
+
+  return { sent, failed };
+}

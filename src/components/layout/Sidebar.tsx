@@ -13,6 +13,7 @@ import {
   Upload,
   ClipboardList,
   LogOut,
+  Grid3X3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -47,6 +48,31 @@ export function Sidebar() {
         label: "Employees",
         href: "/hr/employees",
         icon: <Users className="h-5 w-5" />,
+      },
+      {
+        label: "Tracking Matrix",
+        href: "/hr/tracking",
+        icon: <Grid3X3 className="h-5 w-5" />,
+      }
+    );
+  }
+
+  if (role === "DEPARTMENT_HEAD") {
+    navItems.push(
+      {
+        label: "Dashboard",
+        href: "/dept-head/dashboard",
+        icon: <LayoutDashboard className="h-5 w-5" />,
+      },
+      {
+        label: "Requests",
+        href: "/dept-head/requests",
+        icon: <FileText className="h-5 w-5" />,
+      },
+      {
+        label: "Tracking Matrix",
+        href: "/dept-head/tracking",
+        icon: <Grid3X3 className="h-5 w-5" />,
       }
     );
   }

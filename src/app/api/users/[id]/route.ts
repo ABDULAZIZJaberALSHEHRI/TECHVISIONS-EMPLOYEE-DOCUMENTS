@@ -5,9 +5,10 @@ import { createAuditLog, getClientIp } from "@/lib/audit";
 import { z } from "zod";
 
 const updateUserSchema = z.object({
-  role: z.enum(["ADMIN", "HR", "EMPLOYEE"]).optional(),
+  role: z.enum(["ADMIN", "HR", "DEPARTMENT_HEAD", "EMPLOYEE"]).optional(),
   isActive: z.boolean().optional(),
   department: z.string().optional(),
+  managedDepartment: z.string().nullable().optional(),
   jobTitle: z.string().optional(),
 });
 

@@ -19,6 +19,7 @@ interface RequestCardProps {
   categoryName?: string;
   assignmentCount: number;
   createdByName: string;
+  basePath?: string;
 }
 
 export function RequestCard({
@@ -31,6 +32,7 @@ export function RequestCard({
   categoryName,
   assignmentCount,
   createdByName,
+  basePath = "/hr/requests",
 }: RequestCardProps) {
   const router = useRouter();
   const statusConfig = REQUEST_STATUS_CONFIG[status];
@@ -38,7 +40,7 @@ export function RequestCard({
   return (
     <Card
       className="cursor-pointer transition-shadow hover:shadow-md"
-      onClick={() => router.push(`/hr/requests/${id}`)}
+      onClick={() => router.push(`${basePath}/${id}`)}
     >
       <CardContent className="p-4">
         <div className="mb-2 flex items-start justify-between gap-2">
@@ -54,6 +56,7 @@ export function RequestCard({
         {categoryName && (
           <p className="mb-2 text-xs text-muted-foreground">{categoryName}</p>
         )}
+        <p className="mb-2 text-xs text-muted-foreground">By: {createdByName}</p>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />

@@ -61,6 +61,13 @@ export async function GET(
       );
     }
 
+    // DEPARTMENT_HEAD can only see their department's assignments
+    if (user.role === "DEPARTMENT_HEAD") {
+      docRequest.assignments = docRequest.assignments.filter(
+        (a) => a.employee.department === user.managedDepartment || docRequest.createdById === user.id
+      );
+    }
+
     // Employee can only see their own assignment
     if (user.role === "EMPLOYEE") {
       const hasAssignment = docRequest.assignments.some(
@@ -92,7 +99,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const user = await requireRole(["ADMIN", "HR"]);
+    const user = await requireRole(["ADMIN", "HR", "DEPARTMENT_HEAD"]);
     if (isNextResponse(user)) return user;
 
     const body = await request.json();
@@ -113,6 +120,14 @@ export async function PATCH(
       return NextResponse.json(
         { success: false, error: "Request not found" },
         { status: 404 }
+      );
+    }
+
+    // DEPARTMENT_HEAD can only update their own requests
+    if (user.role === "DEPARTMENT_HEAD" && existing.createdById !== user.id) {
+      return NextResponse.json(
+        { success: false, error: "You can only update your own requests" },
+        { status: 403 }
       );
     }
 

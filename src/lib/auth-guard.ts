@@ -9,6 +9,7 @@ export interface AuthenticatedUser {
   email: string;
   role: Role;
   department: string | null;
+  managedDepartment: string | null;
 }
 
 export async function getAuthUser(): Promise<AuthenticatedUser | null> {
@@ -20,6 +21,7 @@ export async function getAuthUser(): Promise<AuthenticatedUser | null> {
     email: session.user.email,
     role: session.user.role,
     department: session.user.department,
+    managedDepartment: session.user.managedDepartment,
   };
 }
 
