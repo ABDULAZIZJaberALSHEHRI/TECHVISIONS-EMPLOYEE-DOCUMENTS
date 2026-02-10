@@ -6,14 +6,15 @@ import { createAuditLog, getClientIp } from "@/lib/audit";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await requireAuth();
     if (isNextResponse(user)) return user;
 
     const document = await prisma.document.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         assignment: {
           include: {
@@ -55,14 +56,15 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await requireAuth();
     if (isNextResponse(user)) return user;
 
     const document = await prisma.document.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         assignment: { select: { employeeId: true, status: true } },
       },
@@ -92,7 +94,7 @@ export async function DELETE(
     }
 
     await deleteFile(document.filePath);
-    await prisma.document.delete({ where: { id: params.id } });
+    await prisma.document.delete({ where: { id } });
 
     // If this was the latest, mark previous version as latest
     if (document.isLatest) {
@@ -118,7 +120,7 @@ export async function DELETE(
       userId: user.id,
       action: "DELETE_DOCUMENT",
       entityType: "document",
-      entityId: params.id,
+      entityId: id,
       details: { fileName: document.fileName },
       ipAddress: getClientIp(request),
     });

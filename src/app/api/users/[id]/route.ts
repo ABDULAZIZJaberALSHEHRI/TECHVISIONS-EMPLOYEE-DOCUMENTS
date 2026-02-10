@@ -14,14 +14,15 @@ const updateUserSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authUser = await requireRole(["ADMIN", "HR"]);
     if (isNextResponse(authUser)) return authUser;
 
     const user = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: {
         id: true,
         name: true,
@@ -61,9 +62,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authUser = await requireRole(["ADMIN"]);
     if (isNextResponse(authUser)) return authUser;
 
@@ -72,13 +74,13 @@ export async function PATCH(
 
     if (!parsed.success) {
       return NextResponse.json(
-        { success: false, error: parsed.error.errors[0].message },
+        { success: false, error: parsed.error.issues[0].message },
         { status: 400 }
       );
     }
 
     const existingUser = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingUser) {
@@ -89,7 +91,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.user.update({
-      where: { id: params.id },
+      where: { id },
       data: parsed.data,
     });
 
@@ -97,7 +99,7 @@ export async function PATCH(
       userId: authUser.id,
       action: "UPDATE_USER",
       entityType: "user",
-      entityId: params.id,
+      entityId: id,
       details: { changes: parsed.data },
       ipAddress: getClientIp(request),
     });

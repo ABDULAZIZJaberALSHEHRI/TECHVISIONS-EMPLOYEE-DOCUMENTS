@@ -6,14 +6,15 @@ import { createAuditLog, getClientIp } from "@/lib/audit";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await requireRole(["ADMIN", "HR"]);
     if (isNextResponse(user)) return user;
 
     const docRequest = await prisma.documentRequest.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         assignments: {
           where: { status: { in: ["PENDING", "OVERDUE"] } },
@@ -63,7 +64,7 @@ export async function POST(
       userId: user.id,
       action: "SEND_REMINDER",
       entityType: "request",
-      entityId: params.id,
+      entityId: id,
       details: { remindersSent: pendingAssignments.length },
       ipAddress: getClientIp(request),
     });

@@ -12,9 +12,10 @@ const reviewSchema = z.object({
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await requireRole(["ADMIN", "HR"]);
     if (isNextResponse(user)) return user;
 
@@ -23,7 +24,7 @@ export async function PATCH(
 
     if (!parsed.success) {
       return NextResponse.json(
-        { success: false, error: parsed.error.errors[0].message },
+        { success: false, error: parsed.error.issues[0].message },
         { status: 400 }
       );
     }
@@ -36,7 +37,7 @@ export async function PATCH(
     }
 
     const assignment = await prisma.requestAssignment.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         employee: { select: { id: true, name: true, email: true } },
         request: { select: { id: true, title: true } },
@@ -58,7 +59,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.requestAssignment.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status: parsed.data.action,
         reviewedById: user.id,
@@ -91,7 +92,7 @@ export async function PATCH(
       userId: user.id,
       action: parsed.data.action === "APPROVED" ? "APPROVE_DOCUMENT" : "REJECT_DOCUMENT",
       entityType: "assignment",
-      entityId: params.id,
+      entityId: id,
       details: {
         requestTitle: assignment.request.title,
         employeeName: assignment.employee.name,

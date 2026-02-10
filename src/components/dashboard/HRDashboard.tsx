@@ -136,7 +136,7 @@ export function HRDashboard() {
                     cy="50%"
                     innerRadius={60}
                     outerRadius={100}
-                    label={({ status, count }) => `${status}: ${count}`}
+                    label={({ name, value }) => `${name ?? ""}: ${value ?? ""}`}
                   >
                     {data.statusDistribution.map((_, index) => (
                       <Cell

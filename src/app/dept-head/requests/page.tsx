@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { RequestCard } from "@/components/requests/RequestCard";
@@ -23,6 +23,14 @@ interface RequestItem {
 }
 
 export default function DeptHeadRequestsPage() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <DeptHeadRequestsContent />
+    </Suspense>
+  );
+}
+
+function DeptHeadRequestsContent() {
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);

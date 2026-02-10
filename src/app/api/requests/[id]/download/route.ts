@@ -9,14 +9,15 @@ import { PassThrough } from "stream";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await requireRole(["ADMIN", "HR"]);
     if (isNextResponse(user)) return user;
 
     const docRequest = await prisma.documentRequest.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         assignments: {
           include: {

@@ -7,14 +7,15 @@ import { existsSync } from "fs";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await requireAuth();
     if (isNextResponse(user)) return user;
 
     const document = await prisma.document.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         assignment: { select: { employeeId: true } },
       },

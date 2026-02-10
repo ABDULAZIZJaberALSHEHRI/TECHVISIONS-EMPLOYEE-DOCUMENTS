@@ -14,14 +14,15 @@ import path from "path";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await requireAuth();
     if (isNextResponse(user)) return user;
 
     const docRequest = await prisma.documentRequest.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { templateUrl: true, templateName: true },
     });
 
@@ -75,14 +76,15 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await requireRole(["ADMIN", "HR", "DEPARTMENT_HEAD"]);
     if (isNextResponse(user)) return user;
 
     const docRequest = await prisma.documentRequest.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { id: true, createdById: true, title: true },
     });
 
@@ -124,11 +126,11 @@ export async function POST(
     }
 
     // Delete old template if exists
-    await deleteTemplateFile(params.id);
+    await deleteTemplateFile(id);
 
-    const saved = await saveTemplateFile(file, params.id);
+    const saved = await saveTemplateFile(file, id);
     await prisma.documentRequest.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         templateUrl: saved.filePath,
         templateName: saved.fileName,
@@ -139,7 +141,7 @@ export async function POST(
       userId: user.id,
       action: "UPLOAD_TEMPLATE",
       entityType: "request",
-      entityId: params.id,
+      entityId: id,
       details: { fileName: saved.fileName, fileSize: saved.fileSize },
       ipAddress: getClientIp(request),
     });
@@ -159,14 +161,15 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await requireRole(["ADMIN", "HR", "DEPARTMENT_HEAD"]);
     if (isNextResponse(user)) return user;
 
     const docRequest = await prisma.documentRequest.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { id: true, createdById: true, templateUrl: true },
     });
 
@@ -195,9 +198,9 @@ export async function DELETE(
       );
     }
 
-    await deleteTemplateFile(params.id);
+    await deleteTemplateFile(id);
     await prisma.documentRequest.update({
-      where: { id: params.id },
+      where: { id },
       data: { templateUrl: null, templateName: null },
     });
 
@@ -205,7 +208,7 @@ export async function DELETE(
       userId: user.id,
       action: "DELETE_TEMPLATE",
       entityType: "request",
-      entityId: params.id,
+      entityId: id,
       ipAddress: getClientIp(request),
     });
 

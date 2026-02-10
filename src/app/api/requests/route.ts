@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
     const parsed = createRequestSchema.safeParse(data);
     if (!parsed.success) {
       return NextResponse.json(
-        { success: false, error: parsed.error.errors[0].message },
+        { success: false, error: parsed.error.issues[0].message },
         { status: 400 }
       );
     }

@@ -18,14 +18,15 @@ const updateRequestSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await requireAuth();
     if (isNextResponse(user)) return user;
 
     const docRequest = await prisma.documentRequest.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         category: true,
         createdBy: { select: { id: true, name: true, email: true } },
@@ -96,9 +97,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await requireRole(["ADMIN", "HR", "DEPARTMENT_HEAD"]);
     if (isNextResponse(user)) return user;
 
@@ -107,13 +109,13 @@ export async function PATCH(
 
     if (!parsed.success) {
       return NextResponse.json(
-        { success: false, error: parsed.error.errors[0].message },
+        { success: false, error: parsed.error.issues[0].message },
         { status: 400 }
       );
     }
 
     const existing = await prisma.documentRequest.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existing) {
@@ -137,14 +139,14 @@ export async function PATCH(
     }
 
     const updated = await prisma.documentRequest.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
     });
 
     // If deadline changed, update all assignment due dates
     if (parsed.data.deadline) {
       await prisma.requestAssignment.updateMany({
-        where: { requestId: params.id },
+        where: { requestId: id },
         data: { dueDate: new Date(parsed.data.deadline) },
       });
     }
@@ -152,7 +154,7 @@ export async function PATCH(
     // If request cancelled, notify employees
     if (parsed.data.status === "CANCELLED") {
       const assignments = await prisma.requestAssignment.findMany({
-        where: { requestId: params.id },
+        where: { requestId: id },
         select: { employeeId: true },
       });
 
@@ -171,7 +173,7 @@ export async function PATCH(
       userId: user.id,
       action: "UPDATE_REQUEST",
       entityType: "request",
-      entityId: params.id,
+      entityId: id,
       details: parsed.data,
       ipAddress: getClientIp(request),
     });
@@ -188,14 +190,15 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await requireRole(["ADMIN"]);
     if (isNextResponse(user)) return user;
 
     const existing = await prisma.documentRequest.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existing) {
@@ -205,13 +208,13 @@ export async function DELETE(
       );
     }
 
-    await prisma.documentRequest.delete({ where: { id: params.id } });
+    await prisma.documentRequest.delete({ where: { id } });
 
     await createAuditLog({
       userId: user.id,
       action: "DELETE_REQUEST",
       entityType: "request",
-      entityId: params.id,
+      entityId: id,
       details: { title: existing.title },
       ipAddress: getClientIp(request),
     });
