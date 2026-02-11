@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { EmployeeSelector } from "./EmployeeSelector";
+import { HRSelector } from "./HRSelector";
 import { Loader2, Upload, X, FileText, Users, Plus, Trash2 } from "lucide-react";
 
 interface Category {
@@ -42,6 +43,7 @@ export function RequestForm({ redirectPath = "/hr/requests" }: RequestFormProps)
   const [documentSlots, setDocumentSlots] = useState<{ name: string; templateId: string }[]>([
     { name: "", templateId: "" },
   ]);
+  const [assignedToId, setAssignedToId] = useState<string | undefined>(undefined);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -111,6 +113,10 @@ export function RequestForm({ redirectPath = "/hr/requests" }: RequestFormProps)
 
     if (targetType === "DEPARTMENT" && selectedDepartments.length === 1) {
       formData.set("department", selectedDepartments[0]);
+    }
+
+    if (assignedToId) {
+      formData.set("assignedToId", assignedToId);
     }
 
     if (templateFile) {
@@ -323,6 +329,13 @@ export function RequestForm({ redirectPath = "/hr/requests" }: RequestFormProps)
                 className="cursor-pointer"
               />
             </div>
+
+            {(userRole === "ADMIN" || userRole === "DEPARTMENT_HEAD" || userRole === "HR") && (
+              <HRSelector
+                value={assignedToId}
+                onChange={setAssignedToId}
+              />
+            )}
           </CardContent>
         </Card>
 

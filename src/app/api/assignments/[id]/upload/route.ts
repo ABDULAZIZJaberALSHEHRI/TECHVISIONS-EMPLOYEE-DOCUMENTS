@@ -27,6 +27,8 @@ export async function POST(
             acceptedFormats: true,
             maxFileSizeMb: true,
             status: true,
+            createdById: true,
+            assignedToId: true,
           },
         },
       },
@@ -47,7 +49,17 @@ export async function POST(
       );
     }
 
-    if (assignment.request.status !== "OPEN") {
+    // HR can only upload to requests they created or are assigned to
+    if (user.role === "HR") {
+      if (assignment.request.createdById !== user.id && assignment.request.assignedToId !== user.id) {
+        return NextResponse.json(
+          { success: false, error: "Access denied" },
+          { status: 403 }
+        );
+      }
+    }
+
+    if (assignment.request.status !== "OPEN" && assignment.request.status !== "PENDING_HR") {
       return NextResponse.json(
         { success: false, error: "This request is no longer accepting submissions" },
         { status: 400 }

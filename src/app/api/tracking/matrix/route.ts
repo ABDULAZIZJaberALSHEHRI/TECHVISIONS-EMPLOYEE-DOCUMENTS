@@ -56,10 +56,13 @@ export async function GET(request: NextRequest) {
       assignmentWhere.status = status;
     }
 
-    // HR can only see assignments for requests they created
-    const requestWhere: Record<string, unknown> = { status: "OPEN" };
+    // HR can only see assignments for requests they created or are assigned to
+    const requestWhere: Record<string, unknown> = { status: { in: ["OPEN", "PENDING_HR"] } };
     if (user.role === "HR") {
-      requestWhere.createdById = user.id;
+      requestWhere.OR = [
+        { createdById: user.id },
+        { assignedToId: user.id },
+      ];
     }
     if (categoryId) {
       requestWhere.categoryId = categoryId;

@@ -15,7 +15,8 @@ const updateRequestSchema = z.object({
   categoryId: z.string().nullable().optional(),
   deadline: z.string().optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
-  status: z.enum(["OPEN", "CLOSED", "CANCELLED"]).optional(),
+  status: z.enum(["OPEN", "PENDING_HR", "CLOSED", "CANCELLED"]).optional(),
+  assignedToId: z.string().nullable().optional(),
   acceptedFormats: z.string().optional(),
   maxFileSizeMb: z.number().min(1).max(100).optional(),
   notes: z.string().optional(),
@@ -31,14 +32,34 @@ export async function GET(
     const user = await requireAuth();
     if (isNextResponse(user)) return user;
 
-    const docRequest = await prisma.documentRequest.findUnique({
-      where: { id },
+    // Build role-based WHERE clause — authorization at query level
+    const where: Record<string, unknown> = { id };
+
+    if (user.role === "EMPLOYEE") {
+      // Employee must have an assignment — enforced at SQL level
+      where.assignments = { some: { employeeId: user.id } };
+    } else if (user.role === "HR") {
+      where.OR = [{ createdById: user.id }, { assignedToId: user.id }];
+    } else if (user.role === "DEPARTMENT_HEAD") {
+      where.OR = [
+        { createdById: user.id },
+        { assignments: { some: { employee: { department: user.managedDepartment } } } },
+      ];
+    }
+    // ADMIN: no additional filter (sees all)
+
+    const docRequest = await prisma.documentRequest.findFirst({
+      where,
       include: {
         category: true,
         createdBy: { select: { id: true, name: true, email: true } },
+        assignedTo: { select: { id: true, name: true, email: true } },
         documentSlots: { orderBy: { sortOrder: "asc" } },
         attachments: true,
         assignments: {
+          ...(user.role === "EMPLOYEE"
+            ? { where: { employeeId: user.id } }
+            : {}),
           include: {
             employee: {
               select: { id: true, name: true, email: true, department: true },
@@ -63,40 +84,34 @@ export async function GET(
     });
 
     if (!docRequest) {
-      return NextResponse.json(
-        { success: false, error: "Request not found" },
-        { status: 404 }
+      // Debug: log exact values for troubleshooting
+      console.error(
+        `GET /api/requests/${id} — ACCESS CHECK FAILED: role=${user.role}, userId=${user.id}, requestId=${id}`
       );
-    }
 
-    // HR can only see requests they created
-    if (user.role === "HR" && docRequest.createdById !== user.id) {
+      // Differentiate 404 vs 403
+      const exists = await prisma.documentRequest.findUnique({
+        where: { id },
+        select: { id: true },
+      });
+
+      if (!exists) {
+        return NextResponse.json(
+          { success: false, error: "Request not found" },
+          { status: 404 }
+        );
+      }
+
       return NextResponse.json(
         { success: false, error: "Access denied" },
         { status: 403 }
       );
     }
 
-    // DEPARTMENT_HEAD can only see their department's assignments
-    if (user.role === "DEPARTMENT_HEAD") {
+    // DEPARTMENT_HEAD: filter assignments to their department only
+    if (user.role === "DEPARTMENT_HEAD" && docRequest.createdById !== user.id) {
       docRequest.assignments = docRequest.assignments.filter(
-        (a) => a.employee.department === user.managedDepartment || docRequest.createdById === user.id
-      );
-    }
-
-    // Employee can only see their own assignment
-    if (user.role === "EMPLOYEE") {
-      const hasAssignment = docRequest.assignments.some(
-        (a) => a.employeeId === user.id
-      );
-      if (!hasAssignment) {
-        return NextResponse.json(
-          { success: false, error: "Access denied" },
-          { status: 403 }
-        );
-      }
-      docRequest.assignments = docRequest.assignments.filter(
-        (a) => a.employeeId === user.id
+        (a) => a.employee.department === user.managedDepartment
       );
     }
 
@@ -140,15 +155,42 @@ export async function PATCH(
       );
     }
 
-    // HR and DEPARTMENT_HEAD can only update their own requests
-    if (
-      (user.role === "HR" || user.role === "DEPARTMENT_HEAD") &&
-      existing.createdById !== user.id
-    ) {
+    // HR can update requests they created or are assigned to, but cannot reassign
+    if (user.role === "HR") {
+      if (existing.createdById !== user.id && existing.assignedToId !== user.id) {
+        return NextResponse.json(
+          { success: false, error: "You can only update your own requests" },
+          { status: 403 }
+        );
+      }
+      if (parsed.data.assignedToId !== undefined) {
+        return NextResponse.json(
+          { success: false, error: "HR users cannot reassign requests" },
+          { status: 403 }
+        );
+      }
+    }
+
+    // DEPARTMENT_HEAD can only update their own requests
+    if (user.role === "DEPARTMENT_HEAD" && existing.createdById !== user.id) {
       return NextResponse.json(
         { success: false, error: "You can only update your own requests" },
         { status: 403 }
       );
+    }
+
+    // Validate assignedToId change
+    if (parsed.data.assignedToId !== undefined && parsed.data.assignedToId !== null) {
+      const targetUser = await prisma.user.findUnique({
+        where: { id: parsed.data.assignedToId },
+        select: { role: true, isActive: true },
+      });
+      if (!targetUser || targetUser.role !== "HR" || !targetUser.isActive) {
+        return NextResponse.json(
+          { success: false, error: "Invalid HR user for assignment" },
+          { status: 400 }
+        );
+      }
     }
 
     const { documentSlots, ...restData } = parsed.data;

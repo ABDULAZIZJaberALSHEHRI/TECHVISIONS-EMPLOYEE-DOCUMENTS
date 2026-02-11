@@ -23,7 +23,7 @@ export async function GET(
 
     const docRequest = await prisma.documentRequest.findUnique({
       where: { id },
-      select: { templateUrl: true, templateName: true },
+      select: { templateUrl: true, templateName: true, createdById: true, assignedToId: true },
     });
 
     if (!docRequest || !docRequest.templateUrl) {
@@ -32,6 +32,45 @@ export async function GET(
         { status: 404 }
       );
     }
+
+    // Role-based access control for template downloads
+    if (user.role === "EMPLOYEE") {
+      const hasAssignment = await prisma.requestAssignment.findFirst({
+        where: { requestId: id, employeeId: user.id },
+        select: { id: true },
+      });
+      if (!hasAssignment) {
+        return NextResponse.json(
+          { success: false, error: "Access denied" },
+          { status: 403 }
+        );
+      }
+    } else if (user.role === "HR") {
+      if (docRequest.createdById !== user.id && docRequest.assignedToId !== user.id) {
+        return NextResponse.json(
+          { success: false, error: "Access denied" },
+          { status: 403 }
+        );
+      }
+    } else if (user.role === "DEPARTMENT_HEAD") {
+      const hasAccess = await prisma.documentRequest.findFirst({
+        where: {
+          id,
+          OR: [
+            { createdById: user.id },
+            { assignments: { some: { employee: { department: user.managedDepartment } } } },
+          ],
+        },
+        select: { id: true },
+      });
+      if (!hasAccess) {
+        return NextResponse.json(
+          { success: false, error: "Access denied" },
+          { status: 403 }
+        );
+      }
+    }
+    // ADMIN: no restriction
 
     const filePath = getTemplateFilePath(docRequest.templateUrl);
     if (!existsSync(filePath)) {

@@ -14,6 +14,7 @@ import {
   CheckCircle,
   Plus,
   Users,
+  Inbox,
 } from "lucide-react";
 import {
   PieChart,
@@ -39,6 +40,10 @@ interface DashboardData {
     approvedThisMonth: number;
     rejectedThisMonth: number;
   };
+  workloadOverview: {
+    personalRequests: number;
+    assignedTasks: number;
+  };
   statusDistribution: { status: string; count: number }[];
   requestsPerMonth: { month: string; count: number }[];
   recentActivity: {
@@ -59,6 +64,7 @@ interface DashboardData {
 }
 
 const PIE_COLORS = ["#F59E0B", "#3B82F6", "#22C55E", "#EF4444", "#8B5CF6"];
+const WORKLOAD_COLORS = ["#3B82F6", "#8B5CF6"];
 
 export function HRDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -76,6 +82,11 @@ export function HRDashboard() {
   }, []);
 
   if (loading || !data) return <PageLoader />;
+
+  const workloadData = [
+    { name: "My Requests", value: data.workloadOverview.personalRequests },
+    { name: "Assigned to Me", value: data.workloadOverview.assignedTasks },
+  ].filter((d) => d.value > 0);
 
   return (
     <div className="space-y-6">
@@ -119,7 +130,8 @@ export function HRDashboard() {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Submissions by Status */}
         <Card className="animate-fade-in-up animate-fill-both" style={{ animationDelay: "300ms" }}>
           <CardHeader>
             <CardTitle className="text-base">Submissions by Status</CardTitle>
@@ -156,6 +168,44 @@ export function HRDashboard() {
           </CardContent>
         </Card>
 
+        {/* Workload Overview */}
+        <Card className="animate-fade-in-up animate-fill-both" style={{ animationDelay: "330ms" }}>
+          <CardHeader>
+            <CardTitle className="text-base">Workload Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {workloadData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={workloadData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    label={({ name, value }) => `${name ?? ""}: ${value ?? ""}`}
+                  >
+                    {workloadData.map((_, index) => (
+                      <Cell
+                        key={index}
+                        fill={WORKLOAD_COLORS[index % WORKLOAD_COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-[250px] items-center justify-center text-gray-400">
+                No workload data yet
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Requests Per Month */}
         <Card className="animate-fade-in-up animate-fill-both" style={{ animationDelay: "360ms" }}>
           <CardHeader>
             <CardTitle className="text-base">Requests Per Month</CardTitle>
@@ -265,6 +315,13 @@ export function HRDashboard() {
           <Button onClick={() => router.push("/hr/requests/new")}>
             <Plus className="mr-2 h-4 w-4" />
             Create New Request
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => router.push("/hr/assignments")}
+          >
+            <Inbox className="mr-2 h-4 w-4" />
+            Incoming Tasks
           </Button>
           <Button
             variant="outline"

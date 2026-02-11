@@ -38,10 +38,10 @@ export async function GET(request: NextRequest) {
       employeeWhere.department = { in: accessibleDepts };
     }
 
-    // Get open requests (HR can only see their own)
-    const requestWhere: Record<string, unknown> = { status: "OPEN" };
+    // Get open requests (HR can only see requests they created or are assigned to)
+    const requestWhere: Record<string, unknown> = { status: { in: ["OPEN", "PENDING_HR"] } };
     if (user.role === "HR") {
-      requestWhere.createdById = user.id;
+      requestWhere.OR = [{ createdById: user.id }, { assignedToId: user.id }];
     }
     const openRequests = await prisma.documentRequest.findMany({
       where: requestWhere,

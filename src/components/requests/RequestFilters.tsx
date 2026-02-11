@@ -75,6 +75,7 @@ export function RequestFilters({
         <SelectContent>
           <SelectItem value="ALL">All Status</SelectItem>
           <SelectItem value="OPEN">Open</SelectItem>
+          <SelectItem value="PENDING_HR">Pending HR</SelectItem>
           <SelectItem value="CLOSED">Closed</SelectItem>
           <SelectItem value="CANCELLED">Cancelled</SelectItem>
         </SelectContent>

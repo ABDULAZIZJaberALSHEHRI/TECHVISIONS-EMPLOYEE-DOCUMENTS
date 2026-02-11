@@ -15,10 +15,11 @@ interface RequestItem {
   title: string;
   description: string;
   priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
-  status: "OPEN" | "CLOSED" | "CANCELLED";
+  status: "OPEN" | "PENDING_HR" | "CLOSED" | "CANCELLED";
   deadline: string;
   category: { id: string; name: string } | null;
   createdBy: { id: string; name: string; email: string };
+  assignedTo: { id: string; name: string; email: string } | null;
   _count: { assignments: number; attachments: number };
 }
 
@@ -128,6 +129,7 @@ function DeptHeadRequestsContent() {
                 categoryName={req.category?.name}
                 assignmentCount={req._count.assignments}
                 createdByName={req.createdBy.name}
+                assignedToName={req.assignedTo?.name}
                 basePath="/dept-head/requests"
               />
             ))}

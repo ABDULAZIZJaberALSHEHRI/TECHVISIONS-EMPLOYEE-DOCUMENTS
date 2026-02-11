@@ -1,53 +1,56 @@
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { RequestCard } from "@/components/requests/RequestCard";
-import { RequestFilters } from "@/components/requests/RequestFilters";
 import { PageLoader } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Plus, Download, FileText } from "lucide-react";
+import { Inbox, FileText } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useDebounce } from "@/hooks/useDebounce";
 
-interface RequestItem {
+interface AssignedRequest {
   id: string;
   title: string;
   description: string;
   priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
   status: "OPEN" | "PENDING_HR" | "CLOSED" | "CANCELLED";
   deadline: string;
+  createdAt: string;
   category: { id: string; name: string } | null;
   createdBy: { id: string; name: string; email: string };
   assignedTo: { id: string; name: string; email: string } | null;
   _count: { assignments: number; attachments: number };
 }
 
-export default function HRRequestsPage() {
+export default function HRAssignmentsPage() {
   return (
     <Suspense fallback={<PageLoader />}>
-      <HRRequestsContent />
+      <HRAssignmentsContent />
     </Suspense>
   );
 }
 
-function HRRequestsContent() {
-  const [requests, setRequests] = useState<RequestItem[]>([]);
+function HRAssignmentsContent() {
+  const [requests, setRequests] = useState<AssignedRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [status, setStatus] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const s = searchParams.get("status");
-    if (s) setStatus(s);
-  }, [searchParams]);
 
   const fetchRequests = useCallback(async () => {
     setLoading(true);
@@ -55,74 +58,96 @@ function HRRequestsContent() {
     params.set("page", String(page));
     params.set("pageSize", "12");
     if (debouncedSearch) params.set("search", debouncedSearch);
-    if (status && status !== "ALL") params.set("status", status);
     if (priority && priority !== "ALL") params.set("priority", priority);
-    if (categoryId && categoryId !== "ALL") params.set("categoryId", categoryId);
+    if (status && status !== "ALL") params.set("status", status);
 
     try {
-      const res = await fetch(`/api/requests?${params}`);
+      const res = await fetch(`/api/hr/assignments?${params}`);
       const data = await res.json();
       if (data.success) {
         setRequests(data.data);
         setTotal(data.total);
+        setPendingCount(data.pendingCount);
       }
     } catch (error) {
-      console.error("Failed to fetch requests:", error);
+      console.error("Failed to fetch assignments:", error);
     } finally {
       setLoading(false);
     }
-  }, [page, debouncedSearch, status, priority, categoryId]);
+  }, [page, debouncedSearch, priority, status]);
 
   useEffect(() => {
     fetchRequests();
   }, [fetchRequests]);
 
-  const handleExport = () => {
-    window.open("/api/requests/export", "_blank");
-  };
-
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Document Requests</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-          <Button onClick={() => router.push("/hr/requests/new")}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Request
-          </Button>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-gray-900">Incoming Tasks</h1>
+          {pendingCount > 0 && (
+            <Badge className="bg-purple-100 text-purple-700">
+              {pendingCount} pending
+            </Badge>
+          )}
         </div>
       </div>
 
-      <RequestFilters
-        search={search}
-        onSearchChange={setSearch}
-        status={status}
-        onStatusChange={setStatus}
-        priority={priority}
-        onPriorityChange={setPriority}
-        categoryId={categoryId}
-        onCategoryChange={setCategoryId}
-        onClear={() => {
-          setSearch("");
-          setStatus("");
-          setPriority("");
-          setCategoryId("");
-        }}
-      />
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Input
+            placeholder="Search by title, sender..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <Select value={status} onValueChange={setStatus}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="All Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Status</SelectItem>
+            <SelectItem value="PENDING_HR">Pending HR</SelectItem>
+            <SelectItem value="OPEN">Open</SelectItem>
+            <SelectItem value="CLOSED">Closed</SelectItem>
+            <SelectItem value="CANCELLED">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={priority} onValueChange={setPriority}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="All Priority" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Priority</SelectItem>
+            <SelectItem value="LOW">Low</SelectItem>
+            <SelectItem value="MEDIUM">Medium</SelectItem>
+            <SelectItem value="HIGH">High</SelectItem>
+            <SelectItem value="URGENT">Urgent</SelectItem>
+          </SelectContent>
+        </Select>
+        {(search || priority || status) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSearch("");
+              setPriority("");
+              setStatus("");
+            }}
+          >
+            Clear
+          </Button>
+        )}
+      </div>
 
       {loading ? (
         <PageLoader />
       ) : requests.length === 0 ? (
         <EmptyState
-          icon={<FileText className="h-8 w-8 text-muted-foreground" />}
-          title="No requests found"
-          description="Create your first document request to get started."
-          actionLabel="Create Request"
-          onAction={() => router.push("/hr/requests/new")}
+          icon={<Inbox className="h-8 w-8 text-muted-foreground" />}
+          title="No incoming tasks"
+          description="Requests assigned to you by Admin or Department Heads will appear here."
         />
       ) : (
         <>

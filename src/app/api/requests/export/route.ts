@@ -14,9 +14,12 @@ export async function GET(request: NextRequest) {
     const where: Record<string, unknown> = {};
     if (requestId) where.id = requestId;
 
-    // HR can only export their own requests
+    // HR can only export their own or assigned requests
     if (user.role === "HR") {
-      where.createdById = user.id;
+      where.OR = [
+        { createdById: user.id },
+        { assignedToId: user.id },
+      ];
     }
 
     const requests = await prisma.documentRequest.findMany({
@@ -24,6 +27,7 @@ export async function GET(request: NextRequest) {
       include: {
         category: { select: { name: true } },
         createdBy: { select: { name: true } },
+        assignedTo: { select: { name: true } },
         assignments: {
           include: {
             employee: { select: { name: true, email: true, department: true } },
@@ -47,6 +51,7 @@ export async function GET(request: NextRequest) {
       { header: "Status", key: "status", width: 12 },
       { header: "Deadline", key: "deadline", width: 15 },
       { header: "Created By", key: "createdBy", width: 20 },
+      { header: "Assigned To", key: "assignedTo", width: 20 },
       { header: "Employee Name", key: "employeeName", width: 25 },
       { header: "Employee Email", key: "employeeEmail", width: 30 },
       { header: "Department", key: "department", width: 20 },
@@ -74,6 +79,7 @@ export async function GET(request: NextRequest) {
           status: req.status,
           deadline: req.deadline.toISOString().split("T")[0],
           createdBy: req.createdBy.name,
+          assignedTo: req.assignedTo?.name || "N/A",
           employeeName: assignment.employee.name,
           employeeEmail: assignment.employee.email,
           department: assignment.employee.department || "N/A",

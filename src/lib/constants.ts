@@ -43,6 +43,7 @@ export const STATUS_CONFIG = {
 
 export const REQUEST_STATUS_CONFIG = {
   OPEN: { label: "Open", color: "bg-green-100 text-green-700" },
+  PENDING_HR: { label: "Pending HR", color: "bg-purple-100 text-purple-700" },
   CLOSED: { label: "Closed", color: "bg-slate-100 text-slate-700" },
   CANCELLED: { label: "Cancelled", color: "bg-red-100 text-red-700" },
 } as const;

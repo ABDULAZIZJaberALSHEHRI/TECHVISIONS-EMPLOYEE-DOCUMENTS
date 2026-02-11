@@ -98,12 +98,22 @@ export function getAllowedTargetTypes(
  */
 export function canAccessRequest(
   user: UserForPermissions,
-  request: { createdById: string }
+  request: { createdById: string; assignedToId?: string | null }
 ): boolean {
   if (user.role === "ADMIN") return true;
-  if (user.role === "HR") return request.createdById === user.id;
+  if (user.role === "HR") {
+    return request.createdById === user.id || request.assignedToId === user.id;
+  }
   if (user.role === "DEPARTMENT_HEAD") return request.createdById === user.id;
   return false;
+}
+
+/**
+ * Check if a user can assign requests to HR users.
+ * Only ADMIN and DEPARTMENT_HEAD can assign.
+ */
+export function canAssignToHR(user: UserForPermissions): boolean {
+  return user.role === "ADMIN" || user.role === "DEPARTMENT_HEAD";
 }
 
 /**

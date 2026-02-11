@@ -37,8 +37,8 @@ export async function GET(
       );
     }
 
-    // HR can only download documents from their own requests
-    if (user.role === "HR" && docRequest.createdById !== user.id) {
+    // HR can only download documents from requests they created or are assigned to
+    if (user.role === "HR" && docRequest.createdById !== user.id && docRequest.assignedToId !== user.id) {
       return NextResponse.json(
         { success: false, error: "Access denied" },
         { status: 403 }

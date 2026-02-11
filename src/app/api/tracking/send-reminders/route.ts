@@ -45,10 +45,10 @@ export async function POST(request: NextRequest) {
       where.status = { in: ["PENDING", "OVERDUE"] };
     }
 
-    // Only open requests (HR can only send reminders for their own requests)
-    const requestFilter: Record<string, unknown> = { status: "OPEN" };
+    // Only open requests (HR can only send reminders for requests they created or are assigned to)
+    const requestFilter: Record<string, unknown> = { status: { in: ["OPEN", "PENDING_HR"] } };
     if (user.role === "HR") {
-      requestFilter.createdById = user.id;
+      requestFilter.OR = [{ createdById: user.id }, { assignedToId: user.id }];
     }
     where.request = requestFilter;
 

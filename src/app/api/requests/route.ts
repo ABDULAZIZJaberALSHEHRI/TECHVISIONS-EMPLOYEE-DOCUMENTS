@@ -27,6 +27,7 @@ const createRequestSchema = z.object({
   assignAll: z.boolean().optional(),
   targetType: z.enum(["ALL_EMPLOYEES", "DEPARTMENT", "SPECIFIC"]).optional(),
   targetDepartments: z.array(z.string()).optional(),
+  assignedToId: z.string().optional(),
   documentSlots: z.array(documentSlotSchema).min(1).max(5).optional(),
 });
 
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
     if (user.role === "EMPLOYEE") {
       where.assignments = { some: { employeeId: user.id } };
     } else if (user.role === "HR") {
-      // HR can only see requests they created
+      // My Requests = created only. Assigned requests live at /hr/assignments
       where.createdById = user.id;
     } else if (user.role === "DEPARTMENT_HEAD" && user.managedDepartment) {
       // Department heads see requests they created or that target their department
@@ -87,6 +88,7 @@ export async function GET(request: NextRequest) {
         include: {
           category: { select: { id: true, name: true } },
           createdBy: { select: { id: true, name: true, email: true } },
+          assignedTo: { select: { id: true, name: true, email: true } },
           documentSlots: { orderBy: { sortOrder: "asc" } },
           _count: { select: { assignments: true, attachments: true } },
           assignments: user.role === "EMPLOYEE"
@@ -149,6 +151,7 @@ export async function POST(request: NextRequest) {
         department: (formData.get("department") as string) || null,
         assignAll: formData.get("assignAll") === "true",
         targetType: (formData.get("targetType") as "ALL_EMPLOYEES" | "DEPARTMENT" | "SPECIFIC") || undefined,
+        assignedToId: (formData.get("assignedToId") as string) || undefined,
         targetDepartments: JSON.parse((formData.get("targetDepartments") as string) || "[]"),
         documentSlots: JSON.parse((formData.get("documentSlots") as string) || "[]"),
       };
@@ -176,8 +179,29 @@ export async function POST(request: NextRequest) {
       targetType: rawTargetType,
       targetDepartments,
       documentSlots,
+      assignedToId,
       ...requestData
     } = parsed.data;
+
+    // Validate assignedToId permissions
+    if (assignedToId) {
+      if (user.role !== "ADMIN" && user.role !== "DEPARTMENT_HEAD" && user.role !== "HR") {
+        return NextResponse.json(
+          { success: false, error: "You cannot assign requests to HR users" },
+          { status: 403 }
+        );
+      }
+      const assignedToUser = await prisma.user.findUnique({
+        where: { id: assignedToId },
+        select: { role: true, isActive: true },
+      });
+      if (!assignedToUser || assignedToUser.role !== "HR" || !assignedToUser.isActive) {
+        return NextResponse.json(
+          { success: false, error: "Invalid HR user for assignment" },
+          { status: 400 }
+        );
+      }
+    }
 
     // Determine target type - backward compatible
     const targetType = rawTargetType || (assignAll ? "ALL_EMPLOYEES" : department ? "DEPARTMENT" : "SPECIFIC");
@@ -268,6 +292,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Auto-assign HR users to their own requests
+    const effectiveAssignedToId = assignedToId || (user.role === "HR" ? user.id : null);
+
+    console.log("REQUEST CREATION:", {
+      createdById: user.id,
+      assignedToId: effectiveAssignedToId,
+      selfAssigned: effectiveAssignedToId === user.id,
+    });
+
     const result = await prisma.$transaction(async (tx) => {
       const docRequest = await tx.documentRequest.create({
         data: {
@@ -275,6 +308,8 @@ export async function POST(request: NextRequest) {
           description: requestData.description,
           categoryId: requestData.categoryId || null,
           createdById: user.id,
+          assignedToId: effectiveAssignedToId,
+          status: effectiveAssignedToId ? "PENDING_HR" : "OPEN",
           deadline: new Date(requestData.deadline),
           priority: requestData.priority,
           acceptedFormats: requestData.acceptedFormats || null,
@@ -355,6 +390,19 @@ export async function POST(request: NextRequest) {
       ).catch((err) => console.error("Notification failed:", err));
     }
 
+    // Notify assigned HR user (skip if they assigned themselves)
+    if (effectiveAssignedToId && effectiveAssignedToId !== user.id) {
+      await prisma.notification.create({
+        data: {
+          userId: effectiveAssignedToId,
+          type: "NEW_REQUEST",
+          title: "New Request Assigned to You",
+          message: `You have been assigned to process: "${result.title}"`,
+          link: `/hr/requests/${result.id}`,
+        },
+      });
+    }
+
     await createAuditLog({
       userId: user.id,
       action: "CREATE_REQUEST",
@@ -363,6 +411,7 @@ export async function POST(request: NextRequest) {
       details: {
         title: result.title,
         targetType,
+        assignedToId: effectiveAssignedToId,
         assignedCount: targetEmployeeIds.length,
         hasTemplate: !!templateFile,
       },

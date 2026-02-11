@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   FileText,
@@ -14,6 +15,7 @@ import {
   ClipboardList,
   LogOut,
   Grid3X3,
+  Inbox,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -23,12 +25,32 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ReactNode;
+  badge?: number;
 }
 
 export function Sidebar() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const role = session?.user?.role;
+  const [incomingCount, setIncomingCount] = useState(0);
+
+  // Fetch pending assigned count for HR badge
+  useEffect(() => {
+    if (role !== "HR") return;
+
+    const fetchCount = () => {
+      fetch("/api/hr/assignments?countOnly=true")
+        .then((res) => res.json())
+        .then((res) => {
+          if (res.success) setIncomingCount(res.pendingCount || 0);
+        })
+        .catch(() => {});
+    };
+
+    fetchCount();
+    const interval = setInterval(fetchCount, 30000); // Poll every 30s
+    return () => clearInterval(interval);
+  }, [role]);
 
   const navItems: NavItem[] = [];
 
@@ -40,10 +62,23 @@ export function Sidebar() {
         icon: <LayoutDashboard className="h-5 w-5" />,
       },
       {
-        label: "Requests",
+        label: "My Requests",
         href: "/hr/requests",
         icon: <FileText className="h-5 w-5" />,
-      },
+      }
+    );
+
+    // "Incoming Tasks" only for HR — strictly assigned requests
+    if (role === "HR") {
+      navItems.push({
+        label: "Incoming Tasks",
+        href: "/hr/assignments",
+        icon: <Inbox className="h-5 w-5" />,
+        badge: incomingCount,
+      });
+    }
+
+    navItems.push(
       {
         label: "Employees",
         href: "/hr/employees",
@@ -151,7 +186,17 @@ export function Sidebar() {
               )}>
                 {item.icon}
               </span>
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {item.badge !== undefined && item.badge > 0 && (
+                <span className={cn(
+                  "flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold",
+                  isActive
+                    ? "bg-white/25 text-white"
+                    : "bg-red-500 text-white animate-pulse"
+                )}>
+                  {item.badge > 9 ? "9+" : item.badge}
+                </span>
+              )}
             </Link>
           );
         })}

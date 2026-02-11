@@ -20,7 +20,12 @@
       "Bash(npm run db:seed:*)",
       "Bash(taskkill:*)",
       "Bash(curl:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(start:*)",
+      "Bash(python -c:*)",
+      "Bash(python:*)",
+      "Bash(findstr:*)"
     ]
   }
 }

@@ -68,6 +68,15 @@ export async function GET() {
     }
 
     // HR / Admin dashboard stats
+    // SECURITY: HR must only see stats for requests they created or are assigned to
+    const isHR = user.role === "HR";
+    const requestScope = isHR
+      ? { OR: [{ createdById: user.id }, { assignedToId: user.id }] }
+      : {};
+    const assignmentRequestScope = isHR
+      ? { request: { OR: [{ createdById: user.id }, { assignedToId: user.id }] } }
+      : {};
+
     const [
       totalRequests,
       pendingSubmissions,
@@ -76,28 +85,55 @@ export async function GET() {
       approvedThisMonth,
       rejectedThisMonth,
     ] = await Promise.all([
-      prisma.documentRequest.count({ where: { status: "OPEN" } }),
-      prisma.requestAssignment.count({ where: { status: "PENDING" } }),
-      prisma.requestAssignment.count({ where: { status: "SUBMITTED" } }),
-      prisma.requestAssignment.count({ where: { status: "OVERDUE" } }),
-      prisma.requestAssignment.count({
-        where: { status: "APPROVED", reviewedAt: { gte: monthStart } },
+      prisma.documentRequest.count({
+        where: { status: { in: ["OPEN", "PENDING_HR"] }, ...requestScope },
       }),
       prisma.requestAssignment.count({
-        where: { status: "REJECTED", reviewedAt: { gte: monthStart } },
+        where: { status: "PENDING", ...assignmentRequestScope },
+      }),
+      prisma.requestAssignment.count({
+        where: { status: "SUBMITTED", ...assignmentRequestScope },
+      }),
+      prisma.requestAssignment.count({
+        where: { status: "OVERDUE", ...assignmentRequestScope },
+      }),
+      prisma.requestAssignment.count({
+        where: { status: "APPROVED", reviewedAt: { gte: monthStart }, ...assignmentRequestScope },
+      }),
+      prisma.requestAssignment.count({
+        where: { status: "REJECTED", reviewedAt: { gte: monthStart }, ...assignmentRequestScope },
       }),
     ]);
 
-    // Status distribution for donut chart
+    // Workload overview (HR only): Personal vs Assigned breakdown
+    let workloadOverview = { personalRequests: 0, assignedTasks: 0 };
+    if (isHR) {
+      const [personal, assigned] = await Promise.all([
+        prisma.documentRequest.count({
+          where: { createdById: user.id, status: { in: ["OPEN", "PENDING_HR"] } },
+        }),
+        prisma.documentRequest.count({
+          where: {
+            assignedToId: user.id,
+            createdById: { not: user.id },
+            status: { in: ["OPEN", "PENDING_HR"] },
+          },
+        }),
+      ]);
+      workloadOverview = { personalRequests: personal, assignedTasks: assigned };
+    }
+
+    // Status distribution for donut chart — scoped
     const statusDistribution = await prisma.requestAssignment.groupBy({
       by: ["status"],
+      where: assignmentRequestScope,
       _count: { status: true },
     });
 
-    // Requests per month for bar chart (last 6 months)
+    // Requests per month for bar chart (last 6 months) — scoped
     const sixMonthsAgo = subMonths(now, 6);
     const requestsPerMonth = await prisma.documentRequest.findMany({
-      where: { createdAt: { gte: sixMonthsAgo } },
+      where: { createdAt: { gte: sixMonthsAgo }, ...requestScope },
       select: { createdAt: true },
     });
 
@@ -113,22 +149,28 @@ export async function GET() {
       }
     }
 
-    // Recent activity
+    // Recent activity — scoped for HR
+    const activityWhere: Record<string, unknown> = {
+      action: { in: ["UPLOAD_DOCUMENT", "APPROVE_DOCUMENT", "REJECT_DOCUMENT", "CREATE_REQUEST"] },
+    };
+    if (isHR) {
+      activityWhere.userId = user.id;
+    }
+
     const recentActivity = await prisma.auditLog.findMany({
-      where: {
-        action: { in: ["UPLOAD_DOCUMENT", "APPROVE_DOCUMENT", "REJECT_DOCUMENT", "CREATE_REQUEST"] },
-      },
+      where: activityWhere,
       include: { user: { select: { name: true } } },
       orderBy: { createdAt: "desc" },
       take: 10,
     });
 
-    // Upcoming deadlines (next 7 days)
+    // Upcoming deadlines (next 7 days) — scoped
     const sevenDaysFromNow = addDays(startOfDay(now), 7);
     const upcomingDeadlines = await prisma.documentRequest.findMany({
       where: {
-        status: "OPEN",
+        status: { in: ["OPEN", "PENDING_HR"] },
         deadline: { gte: startOfDay(now), lte: sevenDaysFromNow },
+        ...requestScope,
       },
       include: {
         _count: { select: { assignments: true } },
@@ -166,6 +208,7 @@ export async function GET() {
           approvedThisMonth,
           rejectedThisMonth,
         },
+        workloadOverview,
         statusDistribution: statusDistribution.map((s) => ({
           status: s.status,
           count: s._count.status,

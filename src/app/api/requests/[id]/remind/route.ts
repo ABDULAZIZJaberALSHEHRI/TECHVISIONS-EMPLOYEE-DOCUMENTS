@@ -32,8 +32,8 @@ export async function POST(
       );
     }
 
-    // HR can only remind for their own requests
-    if (user.role === "HR" && docRequest.createdById !== user.id) {
+    // HR can only remind for requests they created or are assigned to
+    if (user.role === "HR" && docRequest.createdById !== user.id && docRequest.assignedToId !== user.id) {
       return NextResponse.json(
         { success: false, error: "Access denied" },
         { status: 403 }

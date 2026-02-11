@@ -50,6 +50,7 @@ interface RequestDetail {
   createdAt: string;
   category: { id: string; name: string } | null;
   createdBy: { id: string; name: string; email: string };
+  assignedTo: { id: string; name: string; email: string } | null;
   documentSlots?: DocumentSlot[];
   attachments: {
     id: string;
@@ -250,6 +251,11 @@ export default function RequestDetailPage() {
               Created by {request.createdBy.name} on{" "}
               {format(new Date(request.createdAt), "MMM dd, yyyy")}
             </div>
+            {request.assignedTo && (
+              <div className="font-medium text-purple-600">
+                Assigned to: {request.assignedTo.name}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

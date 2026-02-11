@@ -19,6 +19,7 @@ interface RequestCardProps {
   categoryName?: string;
   assignmentCount: number;
   createdByName: string;
+  assignedToName?: string;
   basePath?: string;
 }
 
@@ -32,6 +33,7 @@ export function RequestCard({
   categoryName,
   assignmentCount,
   createdByName,
+  assignedToName,
   basePath = "/hr/requests",
 }: RequestCardProps) {
   const router = useRouter();
@@ -57,6 +59,9 @@ export function RequestCard({
           <p className="mb-2 text-xs text-muted-foreground">{categoryName}</p>
         )}
         <p className="mb-2 text-xs text-muted-foreground">By: {createdByName}</p>
+        {assignedToName && (
+          <p className="mb-2 text-xs text-purple-600">Assigned to: {assignedToName}</p>
+        )}
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />

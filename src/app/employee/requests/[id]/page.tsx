@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -65,8 +65,10 @@ interface RequestDetail {
 
 export default function EmployeeRequestDetailPage() {
   const { id } = useParams();
+  const router = useRouter();
   const [request, setRequest] = useState<RequestDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [previewDoc, setPreviewDoc] = useState<{
     id: string;
     fileName: string;
@@ -77,9 +79,14 @@ export default function EmployeeRequestDetailPage() {
     try {
       const res = await fetch(`/api/requests/${id}`);
       const data = await res.json();
-      if (data.success) setRequest(data.data);
-    } catch (error) {
-      console.error("Failed to fetch request:", error);
+      if (data.success) {
+        setRequest(data.data);
+      } else {
+        setError(data.error || "Failed to load request");
+      }
+    } catch (err) {
+      console.error("Failed to fetch request:", err);
+      setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -90,11 +97,19 @@ export default function EmployeeRequestDetailPage() {
   }, [fetchRequest]);
 
   if (loading) return <PageLoader />;
-  if (!request) return <div>Request not found</div>;
+  if (!request)
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">{error || "Request not found"}</p>
+        <Button variant="ghost" onClick={() => router.back()} className="mt-4">
+          Go Back
+        </Button>
+      </div>
+    );
 
   const assignment = request.assignments[0]; // Employee sees only their own
   const canUpload =
-    request.status === "OPEN" &&
+    (request.status === "OPEN" || request.status === "PENDING_HR") &&
     assignment &&
     (assignment.status === "PENDING" ||
       assignment.status === "OVERDUE" ||
