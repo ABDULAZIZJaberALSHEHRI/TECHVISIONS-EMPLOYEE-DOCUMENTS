@@ -91,20 +91,28 @@ export function getAllowedTargetTypes(
 }
 
 /**
- * Check if a user can access a specific request.
- * - ADMIN: can access any request
- * - HR: can only access requests they created
- * - DEPARTMENT_HEAD: can access requests they created or targeting their department
+ * Unified request access check.
+ * A user can access a request if ANY of these are true:
+ * 1. They are ADMIN
+ * 2. They created the request (createdById)
+ * 3. They are the HR processor (assignedToId)
+ * 4. They are an employee target (exist in employeeTargetIds)
+ *
+ * Pass employeeTargetIds when available to enable employee-target access.
+ * DEPARTMENT_HEAD access also checks department membership via assignments.
  */
 export function canAccessRequest(
   user: UserForPermissions,
-  request: { createdById: string; assignedToId?: string | null }
+  request: {
+    createdById: string;
+    assignedToId?: string | null;
+    employeeTargetIds?: string[];
+  }
 ): boolean {
   if (user.role === "ADMIN") return true;
-  if (user.role === "HR") {
-    return request.createdById === user.id || request.assignedToId === user.id;
-  }
-  if (user.role === "DEPARTMENT_HEAD") return request.createdById === user.id;
+  if (request.createdById === user.id) return true;
+  if (request.assignedToId === user.id) return true;
+  if (request.employeeTargetIds?.includes(user.id)) return true;
   return false;
 }
 

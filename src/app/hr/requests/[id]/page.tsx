@@ -87,6 +87,7 @@ export default function RequestDetailPage() {
   const { id } = useParams();
   const [request, setRequest] = useState<RequestDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<{
     id: string;
@@ -101,9 +102,14 @@ export default function RequestDetailPage() {
     try {
       const res = await fetch(`/api/requests/${id}`);
       const data = await res.json();
-      if (data.success) setRequest(data.data);
-    } catch (error) {
-      console.error("Failed to fetch request:", error);
+      if (data.success) {
+        setRequest(data.data);
+      } else {
+        setError(data.error || "Failed to load request");
+      }
+    } catch (err) {
+      console.error("Failed to fetch request:", err);
+      setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -164,7 +170,15 @@ export default function RequestDetailPage() {
   };
 
   if (loading) return <PageLoader />;
-  if (!request) return <div>Request not found</div>;
+  if (!request)
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">{error || "Request not found"}</p>
+        <Button variant="ghost" onClick={() => router.back()} className="mt-4">
+          Go Back
+        </Button>
+      </div>
+    );
 
   const statusConfig = REQUEST_STATUS_CONFIG[request.status];
 

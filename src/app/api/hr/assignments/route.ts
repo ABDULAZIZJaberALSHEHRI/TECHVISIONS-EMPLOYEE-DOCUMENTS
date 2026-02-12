@@ -10,13 +10,20 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const countOnly = searchParams.get("countOnly") === "true";
 
-    // For badge count: only PENDING_HR requests assigned to this HR user (not self-created)
+    // Unified access: HR processor OR employee target (exclude self-created for processor branch)
+    const accessFilter = {
+      OR: [
+        { assignedToId: user.id, createdById: { not: user.id } },
+        { assignments: { some: { employeeId: user.id } } },
+      ],
+    };
+
+    // For badge count: pending items from the access filter
     if (countOnly) {
       const pendingCount = await prisma.documentRequest.count({
         where: {
-          assignedToId: user.id,
-          NOT: { createdById: user.id },
-          status: "PENDING_HR",
+          ...accessFilter,
+          status: { in: ["OPEN", "PENDING_HR"] },
         },
       });
       return NextResponse.json({ success: true, pendingCount });
@@ -28,12 +35,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
 
-    // STRICT ISOLATION: Only requests assigned TO this HR user, NOT created by them
-    // "My Requests" (created by HR) lives at /hr/requests — NOT here
-    const where: Record<string, unknown> = {
-      assignedToId: user.id,
-      NOT: { createdById: user.id },
-    };
+    const where: Record<string, unknown> = { ...accessFilter };
 
     if (status) where.status = status;
     if (priority) where.priority = priority;
@@ -65,9 +67,8 @@ export async function GET(request: NextRequest) {
       prisma.documentRequest.count({ where }),
       prisma.documentRequest.count({
         where: {
-          assignedToId: user.id,
-          NOT: { createdById: user.id },
-          status: "PENDING_HR",
+          ...accessFilter,
+          status: { in: ["OPEN", "PENDING_HR"] },
         },
       }),
     ]);

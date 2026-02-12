@@ -25,7 +25,13 @@
       "Bash(start:*)",
       "Bash(python -c:*)",
       "Bash(python:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(del \"C:\\\\Users\\\\Alharbi\\\\Desktop\\\\TECHVISIONS-EMPLOYEE-DOCUMENTS\\\\test-hr-lifecycle.py\")",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(1 <<'SQL'\n-- Find HR users\nSELECT id, email, name, role FROM users WHERE role IN \\('HR', 'ADMIN'\\) AND is_active = 1;\nSQL)",
+      "Bash(mysql:*)",
+      "Bash(git diff:*)"
     ]
   }
 }

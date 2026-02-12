@@ -41,22 +41,15 @@ export async function POST(
       );
     }
 
-    // Employee can only upload to their own assignment
-    if (user.role === "EMPLOYEE" && assignment.employeeId !== user.id) {
+    // Upload is allowed if user owns the assignment OR is the HR processor
+    const isAssignmentOwner = assignment.employeeId === user.id;
+    const isHRProcessor = assignment.request.assignedToId === user.id;
+
+    if (!isAssignmentOwner && !isHRProcessor && user.role !== "ADMIN") {
       return NextResponse.json(
         { success: false, error: "Access denied" },
         { status: 403 }
       );
-    }
-
-    // HR can only upload to requests they created or are assigned to
-    if (user.role === "HR") {
-      if (assignment.request.createdById !== user.id && assignment.request.assignedToId !== user.id) {
-        return NextResponse.json(
-          { success: false, error: "Access denied" },
-          { status: 403 }
-        );
-      }
     }
 
     if (assignment.request.status !== "OPEN" && assignment.request.status !== "PENDING_HR") {
@@ -141,21 +134,24 @@ export async function POST(
       data: { status: "SUBMITTED" },
     });
 
-    // Notify HR about the submission
-    const hrUsers = await prisma.user.findMany({
-      where: { role: { in: ["HR", "ADMIN"] }, isActive: true },
-      select: { id: true },
-    });
+    // Notify only the request creator and HR processor (not all HR users)
+    const notifyUserIds = new Set<string>();
+    if (assignment.request.createdById) notifyUserIds.add(assignment.request.createdById);
+    if (assignment.request.assignedToId) notifyUserIds.add(assignment.request.assignedToId);
+    // Don't notify the uploader themselves
+    notifyUserIds.delete(user.id);
 
-    await prisma.notification.createMany({
-      data: hrUsers.map((hr) => ({
-        userId: hr.id,
-        type: "SYSTEM" as const,
-        title: "New Document Submission",
-        message: `${user.name} submitted a document for "${assignment.request.title}"`,
-        link: `/hr/requests/${assignment.requestId}`,
-      })),
-    });
+    if (notifyUserIds.size > 0) {
+      await prisma.notification.createMany({
+        data: Array.from(notifyUserIds).map((uid) => ({
+          userId: uid,
+          type: "SYSTEM" as const,
+          title: "New Document Submission",
+          message: `${user.name} submitted a document for "${assignment.request.title}"`,
+          link: `/hr/requests/${assignment.requestId}`,
+        })),
+      });
+    }
 
     await createAuditLog({
       userId: user.id,

@@ -292,14 +292,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Auto-assign HR users to their own requests
-    const effectiveAssignedToId = assignedToId || (user.role === "HR" ? user.id : null);
-
-    console.log("REQUEST CREATION:", {
-      createdById: user.id,
-      assignedToId: effectiveAssignedToId,
-      selfAssigned: effectiveAssignedToId === user.id,
-    });
+    // Keep unassigned requests unassigned when no HR is selected
+    const effectiveAssignedToId =
+      assignedToId && assignedToId !== ""
+        ? assignedToId
+        : null;
 
     const result = await prisma.$transaction(async (tx) => {
       const docRequest = await tx.documentRequest.create({
@@ -398,7 +395,7 @@ export async function POST(request: NextRequest) {
           type: "NEW_REQUEST",
           title: "New Request Assigned to You",
           message: `You have been assigned to process: "${result.title}"`,
-          link: `/hr/requests/${result.id}`,
+          link: `/hr/assignments/${result.id}`,
         },
       });
     }

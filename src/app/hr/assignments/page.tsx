@@ -165,6 +165,7 @@ function HRAssignmentsContent() {
                 assignmentCount={req._count.assignments}
                 createdByName={req.createdBy.name}
                 assignedToName={req.assignedTo?.name}
+                basePath="/hr/assignments"
               />
             ))}
           </div>

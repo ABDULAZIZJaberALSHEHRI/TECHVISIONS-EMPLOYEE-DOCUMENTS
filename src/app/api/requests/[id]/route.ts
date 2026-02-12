@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireRole, isNextResponse } from "@/lib/auth-guard";
+import { canAccessRequest } from "@/lib/permissions";
 import { createAuditLog, getClientIp } from "@/lib/audit";
 import { z } from "zod";
 
@@ -31,25 +32,8 @@ export async function GET(
     const { id } = await params;
     const user = await requireAuth();
     if (isNextResponse(user)) return user;
-
-    // Build role-based WHERE clause — authorization at query level
-    const where: Record<string, unknown> = { id };
-
-    if (user.role === "EMPLOYEE") {
-      // Employee must have an assignment — enforced at SQL level
-      where.assignments = { some: { employeeId: user.id } };
-    } else if (user.role === "HR") {
-      where.OR = [{ createdById: user.id }, { assignedToId: user.id }];
-    } else if (user.role === "DEPARTMENT_HEAD") {
-      where.OR = [
-        { createdById: user.id },
-        { assignments: { some: { employee: { department: user.managedDepartment } } } },
-      ];
-    }
-    // ADMIN: no additional filter (sees all)
-
-    const docRequest = await prisma.documentRequest.findFirst({
-      where,
+    const docRequest = await prisma.documentRequest.findUnique({
+      where: { id },
       include: {
         category: true,
         createdBy: { select: { id: true, name: true, email: true } },
@@ -57,9 +41,6 @@ export async function GET(
         documentSlots: { orderBy: { sortOrder: "asc" } },
         attachments: true,
         assignments: {
-          ...(user.role === "EMPLOYEE"
-            ? { where: { employeeId: user.id } }
-            : {}),
           include: {
             employee: {
               select: { id: true, name: true, email: true, department: true },
@@ -82,33 +63,36 @@ export async function GET(
         },
       },
     });
-
     if (!docRequest) {
-      // Debug: log exact values for troubleshooting
-      console.error(
-        `GET /api/requests/${id} — ACCESS CHECK FAILED: role=${user.role}, userId=${user.id}, requestId=${id}`
+      return NextResponse.json(
+        { success: false, error: "Request not found" },
+        { status: 404 }
+      );
+    }
+
+    // Unified access check: creator, HR processor, employee target, or ADMIN
+    const employeeTargetIds = docRequest.assignments.map((a) => a.employee.id);
+    const hasAccess = canAccessRequest(user, {
+      createdById: docRequest.createdById,
+      assignedToId: docRequest.assignedToId,
+      employeeTargetIds,
+    });
+
+    // DEPARTMENT_HEAD can also access if they have employees in their department
+    const deptHeadAccess =
+      user.role === "DEPARTMENT_HEAD" &&
+      docRequest.assignments.some(
+        (a) => a.employee.department === user.managedDepartment
       );
 
-      // Differentiate 404 vs 403
-      const exists = await prisma.documentRequest.findUnique({
-        where: { id },
-        select: { id: true },
-      });
-
-      if (!exists) {
-        return NextResponse.json(
-          { success: false, error: "Request not found" },
-          { status: 404 }
-        );
-      }
-
+    if (!hasAccess && !deptHeadAccess) {
       return NextResponse.json(
         { success: false, error: "Access denied" },
         { status: 403 }
       );
     }
 
-    // DEPARTMENT_HEAD: filter assignments to their department only
+    // DEPARTMENT_HEAD: filter assignments to their department only (unless creator)
     if (user.role === "DEPARTMENT_HEAD" && docRequest.createdById !== user.id) {
       docRequest.assignments = docRequest.assignments.filter(
         (a) => a.employee.department === user.managedDepartment
@@ -304,3 +288,5 @@ export async function DELETE(
     );
   }
 }
+
+
