@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { RequestCard } from "@/components/requests/RequestCard";
+import { BlobCard } from "@/components/requests/BlobCard";
 import { PageLoader } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Inbox, FileText } from "lucide-react";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useDebounce } from "@/hooks/useDebounce";
+import { PageContainer, PageHeader } from "@/components/modern";
 
 interface AssignedRequest {
   id: string;
@@ -81,17 +82,18 @@ function HRAssignmentsContent() {
   }, [fetchRequests]);
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-gray-900">Incoming Tasks</h1>
-          {pendingCount > 0 && (
-            <Badge className="bg-purple-100 text-purple-700">
+    <PageContainer>
+      <PageHeader
+        title="Incoming Tasks"
+        description="Document requests assigned to you for review"
+        actions={
+          pendingCount > 0 ? (
+            <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg px-4 py-2 text-sm">
               {pendingCount} pending
             </Badge>
-          )}
-        </div>
-      </div>
+          ) : null
+        }
+      />
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
@@ -152,8 +154,8 @@ function HRAssignmentsContent() {
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {requests.map((req) => (
-              <RequestCard
+            {requests.map((req, index) => (
+              <BlobCard
                 key={req.id}
                 id={req.id}
                 title={req.title}
@@ -166,6 +168,7 @@ function HRAssignmentsContent() {
                 createdByName={req.createdBy.name}
                 assignedToName={req.assignedTo?.name}
                 basePath="/hr/assignments"
+                animationDelay={index * 0.3}
               />
             ))}
           </div>
@@ -194,6 +197,6 @@ function HRAssignmentsContent() {
           )}
         </>
       )}
-    </div>
+    </PageContainer>
   );
 }

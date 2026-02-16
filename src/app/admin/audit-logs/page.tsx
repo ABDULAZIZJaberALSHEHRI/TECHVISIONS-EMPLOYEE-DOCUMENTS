@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatDistanceToNow } from "date-fns";
+import { PageContainer, PageHeader, TableContainer } from "@/components/modern";
 
 interface AuditLog {
   id: string;

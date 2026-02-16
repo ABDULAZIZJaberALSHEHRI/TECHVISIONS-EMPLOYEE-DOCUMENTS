@@ -28,6 +28,8 @@ model User {
   assignments         RequestAssignment[] @relation("Employee")
   reviewedAssignments RequestAssignment[] @relation("Reviewer")
   assignedRequests    DocumentRequest[]   @relation("AssignedRequests")
+  employeeLists           EmployeeList[]       @relation("EmployeeLists")
+  employeeListMemberships EmployeeListMember[] @relation("EmployeeListMemberships")
 
   @@index([email])
   @@index([department])
@@ -123,33 +125,37 @@ model RequestAssignment {
 }
 
 model Document {
-  id           String            @id @default(cuid())
-  assignmentId String            @map("assignment_id")
-  uploadedById String            @map("uploaded_by_id")
-  fileName     String            @map("file_name")
-  filePath     String            @map("file_path")
-  fileSize     Int               @map("file_size")
-  mimeType     String            @map("mime_type")
-  note         String?           @db.Text
-  version      Int               @default(1)
-  isLatest     Boolean           @default(true) @map("is_latest")
-  createdAt    DateTime          @default(now()) @map("created_at")
-  assignment   RequestAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  uploadedBy   User              @relation(fields: [uploadedById], references: [id])
+  id             String            @id @default(cuid())
+  assignmentId   String            @map("assignment_id")
+  uploadedById   String            @map("uploaded_by_id")
+  documentSlotId String?           @map("document_slot_id")
+  fileName       String            @map("file_name")
+  filePath       String            @map("file_path")
+  fileSize       Int               @map("file_size")
+  mimeType       String            @map("mime_type")
+  note           String?           @db.Text
+  version        Int               @default(1)
+  isLatest       Boolean           @default(true) @map("is_latest")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  assignment     RequestAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  uploadedBy     User              @relation(fields: [uploadedById], references: [id])
+  documentSlot   DocumentSlot?     @relation(fields: [documentSlotId], references: [id], onDelete: SetNull)
 
   @@index([assignmentId])
   @@index([uploadedById])
+  @@index([documentSlotId])
   @@map("documents")
 }
 
 model DocumentSlot {
-  id         String          @id @default(cuid())
-  requestId  String          @map("request_id")
-  name       String
-  templateId String?         @map("template_id")
-  sortOrder  Int             @default(0) @map("sort_order")
-  createdAt  DateTime        @default(now()) @map("created_at")
-  request    DocumentRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  id        String          @id @default(cuid())
+  requestId String          @map("request_id")
+  name      String
+  templateId String?        @map("template_id")
+  sortOrder Int             @default(0) @map("sort_order")
+  createdAt DateTime        @default(now()) @map("created_at")
+  request   DocumentRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  documents Document[]
 
   @@index([requestId])
   @@map("document_slots")
@@ -196,6 +202,34 @@ model SystemSetting {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("system_settings")
+}
+
+model EmployeeList {
+  id          String               @id @default(cuid())
+  name        String
+  createdById String               @map("created_by_id")
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+  createdBy   User                 @relation("EmployeeLists", fields: [createdById], references: [id], onDelete: Cascade)
+  members     EmployeeListMember[]
+
+  @@unique([createdById, name])
+  @@index([createdById])
+  @@map("employee_lists")
+}
+
+model EmployeeListMember {
+  id         String       @id @default(cuid())
+  listId     String       @map("list_id")
+  employeeId String       @map("employee_id")
+  addedAt    DateTime     @default(now()) @map("added_at")
+  list       EmployeeList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  employee   User         @relation("EmployeeListMemberships", fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, employeeId])
+  @@index([listId])
+  @@index([employeeId])
+  @@map("employee_list_members")
 }
 
 enum Role {

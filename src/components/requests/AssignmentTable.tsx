@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { ViewSubmissionModal } from "./ViewSubmissionModal";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -21,7 +22,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Download, Eye } from "lucide-react";
+import { CheckCircle, XCircle, Download, Eye, FileArchive, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import type { AssignmentStatus } from "@prisma/client";
 
@@ -60,15 +61,47 @@ export function AssignmentTable({
 }: AssignmentTableProps) {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
-  const [selectedAssignment, setSelectedAssignment] = useState<string>("");
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
 
+  const handleDownload = async (url: string, fallbackName: string, key: string) => {
+    setDownloading((prev) => ({ ...prev, [key]: true }));
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "Download failed" }));
+        toast({ title: "Error", description: error.error || "Download failed", variant: "destructive" });
+        return;
+      }
+      const blob = await response.blob();
+      const disposition = response.headers.get("Content-Disposition");
+      const fileNameMatch = disposition?.match(/filename="?([^"]+)"?/);
+      const fileName = fileNameMatch?.[1] || fallbackName;
+
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch {
+      toast({ title: "Error", description: "Failed to download files", variant: "destructive" });
+    } finally {
+      setDownloading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
   const handleReview = async (action: "APPROVED" | "REJECTED") => {
+    if (!selectedAssignment) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/assignments/${selectedAssignment}/review`, {
+      const res = await fetch(`/api/assignments/${selectedAssignment.id}/review`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -101,6 +134,7 @@ export function AssignmentTable({
       setRejectDialogOpen(false);
       setApproveDialogOpen(false);
       setRejectReason("");
+      setSelectedAssignment(null);
     }
   };
 
@@ -138,14 +172,20 @@ export function AssignmentTable({
                 <TableCell>
                   {a.documents.length > 0 ? (
                     <div>
-                      <p className="text-sm">{a.documents[0].fileName}</p>
+                      <p className="text-sm font-medium">
+                        {a.documents.length} {a.documents.length === 1 ? "file" : "files"}
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        v{a.documents[0].version} ·{" "}
                         {format(
                           new Date(a.documents[0].createdAt),
                           "MMM dd, yyyy"
                         )}
                       </p>
+                      {a.documents.length > 1 && (
+                        <p className="text-xs text-blue-600 mt-1">
+                          Multiple documents uploaded
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <span className="text-sm text-muted-foreground">
@@ -160,42 +200,91 @@ export function AssignmentTable({
                   <div className="flex items-center gap-1">
                     {a.documents.length > 0 && (
                       <>
+                        {/* Eye Icon - View Files */}
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
-                          onClick={() =>
-                            window.open(
-                              `/api/documents/${a.documents[0].id}/download`,
-                              "_blank"
-                            )
-                          }
+                          className="h-8 w-8 text-gray-600 hover:text-blue-600 transition-colors"
+                          onClick={() => {
+                            setSelectedAssignment(a);
+                            setViewModalOpen(true);
+                          }}
+                          title="View files"
                         >
-                          <Download className="h-4 w-4" />
+                          <Eye className="h-4 w-4" />
                         </Button>
+
+                        {/* Download Icon - Download Single or ZIP */}
+                        {a.documents.length === 1 ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-gray-600 hover:text-blue-600 transition-colors"
+                            disabled={downloading[`doc-${a.documents[0].id}`]}
+                            onClick={() =>
+                              handleDownload(
+                                `/api/documents/${a.documents[0].id}/download`,
+                                a.documents[0].fileName,
+                                `doc-${a.documents[0].id}`
+                              )
+                            }
+                            title="Download file"
+                          >
+                            {downloading[`doc-${a.documents[0].id}`] ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Download className="h-4 w-4" />
+                            )}
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-gray-600 hover:text-blue-600 transition-colors"
+                            disabled={downloading[`zip-${a.id}`]}
+                            onClick={() =>
+                              handleDownload(
+                                `/api/assignments/${a.id}/download-all`,
+                                `${a.employee.name}_documents.zip`,
+                                `zip-${a.id}`
+                              )
+                            }
+                            title={`Download all ${a.documents.length} files as ZIP`}
+                          >
+                            {downloading[`zip-${a.id}`] ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <FileArchive className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
                       </>
                     )}
+
+                    {/* Approve & Reject Icons */}
                     {a.status === "SUBMITTED" && (
                       <>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-green-600 hover:text-green-700"
+                          className="h-8 w-8 text-gray-600 hover:text-green-600 transition-colors"
                           onClick={() => {
-                            setSelectedAssignment(a.id);
+                            setSelectedAssignment(a);
                             setApproveDialogOpen(true);
                           }}
+                          title="Approve"
                         >
                           <CheckCircle className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-red-600 hover:text-red-700"
+                          className="h-8 w-8 text-gray-600 hover:text-red-600 transition-colors"
                           onClick={() => {
-                            setSelectedAssignment(a.id);
+                            setSelectedAssignment(a);
                             setRejectDialogOpen(true);
                           }}
+                          title="Reject"
                         >
                           <XCircle className="h-4 w-4" />
                         </Button>
@@ -208,6 +297,17 @@ export function AssignmentTable({
           </TableBody>
         </Table>
       </div>
+
+      {/* View Submission Modal */}
+      {selectedAssignment && (
+        <ViewSubmissionModal
+          open={viewModalOpen}
+          onOpenChange={setViewModalOpen}
+          employeeName={selectedAssignment.employee.name}
+          assignmentId={selectedAssignment.id}
+          documents={selectedAssignment.documents}
+        />
+      )}
 
       <ConfirmDialog
         open={approveDialogOpen}

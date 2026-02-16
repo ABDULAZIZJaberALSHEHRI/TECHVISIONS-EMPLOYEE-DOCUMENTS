@@ -19,7 +19,10 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { EmployeeSelector } from "./EmployeeSelector";
 import { HRSelector } from "./HRSelector";
-import { Loader2, Upload, X, FileText, Users, Plus, Trash2 } from "lucide-react";
+import { MyListsTab } from "./MyListsTab";
+import { SaveListDialog } from "./SaveListDialog";
+import { Loader2, Upload, X, FileText, Users, Plus, Trash2, BookmarkPlus, List } from "lucide-react";
+import { DeadlinePicker } from "@/components/ui/deadline-picker";
 
 interface Category {
   id: string;
@@ -43,11 +46,16 @@ export function RequestForm({ redirectPath = "/hr/requests" }: RequestFormProps)
   const [documentSlots, setDocumentSlots] = useState<{ name: string; templateId: string }[]>([
     { name: "", templateId: "" },
   ]);
+  const [deadline, setDeadline] = useState("");
   const [assignedToId, setAssignedToId] = useState<string | undefined>(undefined);
+  const [activeTab, setActiveTab] = useState<"SPECIFIC" | "DEPARTMENT" | "ALL_EMPLOYEES" | "MY_LISTS">("SPECIFIC");
+  const [saveListDialogOpen, setSaveListDialogOpen] = useState(false);
+  const [listsRefreshKey, setListsRefreshKey] = useState(0);
   const { toast } = useToast();
   const router = useRouter();
 
   const userRole = session?.user?.role;
+  const currentUserId = session?.user?.id;
   const managedDept = session?.user?.managedDepartment;
 
   // Dept heads can only use DEPARTMENT and SPECIFIC
@@ -73,23 +81,32 @@ export function RequestForm({ redirectPath = "/hr/requests" }: RequestFormProps)
   useEffect(() => {
     if (isDeptHead && managedDept) {
       setTargetType("DEPARTMENT");
+      setActiveTab("DEPARTMENT");
       setSelectedDepartments([managedDept]);
     }
   }, [isDeptHead, managedDept]);
 
-  // Fetch employee count preview
+  // Fetch employee count preview (excluding the current user)
   useEffect(() => {
     const fetchCount = async () => {
       if (targetType === "ALL_EMPLOYEES") {
         const res = await fetch("/api/users?countOnly=true");
         const data = await res.json();
-        setEmployeeCount(data.total || data.data?.length || 0);
+        let total = data.total || data.data?.length || 0;
+        // Subtract 1 for the current user who will be excluded
+        if (currentUserId && total > 0) total -= 1;
+        setEmployeeCount(total);
       } else if (targetType === "DEPARTMENT" && selectedDepartments.length > 0) {
         let count = 0;
         for (const dept of selectedDepartments) {
           const res = await fetch(`/api/departments/members?department=${encodeURIComponent(dept)}`);
           const data = await res.json();
-          if (data.success) count += data.employees.length;
+          if (data.success) {
+            const members = currentUserId
+              ? data.employees.filter((e: { id: string }) => e.id !== currentUserId)
+              : data.employees;
+            count += members.length;
+          }
         }
         setEmployeeCount(count);
       } else if (targetType === "SPECIFIC") {
@@ -99,7 +116,7 @@ export function RequestForm({ redirectPath = "/hr/requests" }: RequestFormProps)
       }
     };
     fetchCount();
-  }, [targetType, selectedDepartments, selectedEmployees]);
+  }, [targetType, selectedDepartments, selectedEmployees, currentUserId]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -229,13 +246,13 @@ export function RequestForm({ redirectPath = "/hr/requests" }: RequestFormProps)
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="deadline">Deadline *</Label>
-              <Input
-                id="deadline"
+              <Label>Deadline *</Label>
+              <DeadlinePicker
                 name="deadline"
-                type="date"
+                value={deadline}
+                onChange={setDeadline}
+                minDate={new Date()}
                 required
-                min={new Date().toISOString().split("T")[0]}
               />
             </div>
             <div>
@@ -334,6 +351,7 @@ export function RequestForm({ redirectPath = "/hr/requests" }: RequestFormProps)
               <HRSelector
                 value={assignedToId}
                 onChange={setAssignedToId}
+                excludeUserId={currentUserId}
               />
             )}
           </CardContent>
@@ -411,19 +429,19 @@ export function RequestForm({ redirectPath = "/hr/requests" }: RequestFormProps)
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
-                variant={targetType === "SPECIFIC" ? "default" : "outline"}
-                onClick={() => setTargetType("SPECIFIC")}
+                variant={activeTab === "SPECIFIC" ? "default" : "outline"}
+                onClick={() => { setActiveTab("SPECIFIC"); setTargetType("SPECIFIC"); }}
                 size="sm"
               >
                 Select Employees
               </Button>
               <Button
                 type="button"
-                variant={targetType === "DEPARTMENT" ? "default" : "outline"}
-                onClick={() => setTargetType("DEPARTMENT")}
+                variant={activeTab === "DEPARTMENT" ? "default" : "outline"}
+                onClick={() => { setActiveTab("DEPARTMENT"); setTargetType("DEPARTMENT"); }}
                 size="sm"
               >
                 By Department
@@ -431,24 +449,49 @@ export function RequestForm({ redirectPath = "/hr/requests" }: RequestFormProps)
               {!isDeptHead && (
                 <Button
                   type="button"
-                  variant={targetType === "ALL_EMPLOYEES" ? "default" : "outline"}
-                  onClick={() => setTargetType("ALL_EMPLOYEES")}
+                  variant={activeTab === "ALL_EMPLOYEES" ? "default" : "outline"}
+                  onClick={() => { setActiveTab("ALL_EMPLOYEES"); setTargetType("ALL_EMPLOYEES"); }}
                   size="sm"
                 >
                   All Employees
                 </Button>
               )}
+              <Button
+                type="button"
+                variant={activeTab === "MY_LISTS" ? "default" : "outline"}
+                onClick={() => setActiveTab("MY_LISTS")}
+                size="sm"
+              >
+                <List className="mr-1 h-4 w-4" />
+                My Lists
+              </Button>
             </div>
 
-            {targetType === "SPECIFIC" && (
-              <EmployeeSelector
-                selectedIds={selectedEmployees}
-                onChange={setSelectedEmployees}
-                departmentFilter={isDeptHead ? managedDept || undefined : undefined}
-              />
+            {activeTab === "SPECIFIC" && (
+              <>
+                <EmployeeSelector
+                  selectedIds={selectedEmployees}
+                  onChange={setSelectedEmployees}
+                  departmentFilter={isDeptHead ? managedDept || undefined : undefined}
+                  excludeUserId={currentUserId}
+                />
+                {selectedEmployees.length > 0 && (
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSaveListDialogOpen(true)}
+                    >
+                      <BookmarkPlus className="mr-1 h-4 w-4" />
+                      Save as List
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
 
-            {targetType === "DEPARTMENT" && (
+            {activeTab === "DEPARTMENT" && (
               <div className="space-y-3">
                 <Label>Select Departments</Label>
                 {isDeptHead && managedDept ? (
@@ -481,7 +524,7 @@ export function RequestForm({ redirectPath = "/hr/requests" }: RequestFormProps)
               </div>
             )}
 
-            {targetType === "ALL_EMPLOYEES" && (
+            {activeTab === "ALL_EMPLOYEES" && (
               <div className="rounded-lg border bg-amber-50 p-3">
                 <p className="text-sm font-medium text-amber-800">
                   This request will be assigned to all active employees.
@@ -490,6 +533,19 @@ export function RequestForm({ redirectPath = "/hr/requests" }: RequestFormProps)
                   {employeeCount !== null && `${employeeCount} employees will be assigned.`}
                 </p>
               </div>
+            )}
+
+            {activeTab === "MY_LISTS" && (
+              <MyListsTab
+                onSelectList={(ids) => {
+                  setSelectedEmployees(ids);
+                  setTargetType("SPECIFIC");
+                  setActiveTab("SPECIFIC");
+                }}
+                excludeUserId={currentUserId}
+                departmentFilter={isDeptHead ? managedDept || undefined : undefined}
+                refreshKey={listsRefreshKey}
+              />
             )}
           </CardContent>
         </Card>
@@ -508,6 +564,13 @@ export function RequestForm({ redirectPath = "/hr/requests" }: RequestFormProps)
           Create Request
         </Button>
       </div>
+
+      <SaveListDialog
+        open={saveListDialogOpen}
+        onOpenChange={setSaveListDialogOpen}
+        selectedEmployeeIds={selectedEmployees}
+        onSaved={() => setListsRefreshKey((k) => k + 1)}
+      />
     </form>
   );
 }

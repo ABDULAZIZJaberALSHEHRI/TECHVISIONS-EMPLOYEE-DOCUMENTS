@@ -27,10 +27,26 @@ export const MIME_TYPE_MAP: Record<string, string[]> = {
 };
 
 export const PRIORITY_CONFIG = {
-  LOW: { label: "Low", color: "bg-slate-100 text-slate-700" },
-  MEDIUM: { label: "Medium", color: "bg-blue-100 text-blue-700" },
-  HIGH: { label: "High", color: "bg-orange-100 text-orange-700" },
-  URGENT: { label: "Urgent", color: "bg-red-100 text-red-700" },
+  LOW: {
+    label: "Low",
+    bg: "#F3F4F6",
+    text: "#6B7280"
+  },
+  MEDIUM: {
+    label: "Medium",
+    bg: "#DBEAFE",
+    text: "#2563EB"
+  },
+  HIGH: {
+    label: "High",
+    bg: "#FEF3C7",
+    text: "#D97706"
+  },
+  URGENT: {
+    label: "Urgent",
+    bg: "#FEE2E2",
+    text: "#DC2626"
+  },
 } as const;
 
 export const STATUS_CONFIG = {

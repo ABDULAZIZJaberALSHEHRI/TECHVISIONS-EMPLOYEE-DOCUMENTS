@@ -69,6 +69,7 @@ export async function POST(
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const note = (formData.get("note") as string) || null;
+    const documentSlotId = (formData.get("documentSlotId") as string) || null;
 
     if (!file) {
       return NextResponse.json(
@@ -102,13 +103,17 @@ export async function POST(
       );
     }
 
-    // Mark previous documents as not latest
+    // Mark previous documents as not latest (only for the same slot)
+    const whereClause = documentSlotId
+      ? { assignmentId: assignment.id, documentSlotId: documentSlotId }
+      : { assignmentId: assignment.id, documentSlotId: null };
+
     const currentVersion = await prisma.document.count({
-      where: { assignmentId: assignment.id },
+      where: whereClause,
     });
 
     await prisma.document.updateMany({
-      where: { assignmentId: assignment.id, isLatest: true },
+      where: { ...whereClause, isLatest: true },
       data: { isLatest: false },
     });
 
@@ -118,6 +123,7 @@ export async function POST(
       data: {
         assignmentId: assignment.id,
         uploadedById: user.id,
+        documentSlotId: documentSlotId,
         fileName: saved.fileName,
         filePath: saved.filePath,
         fileSize: saved.fileSize,

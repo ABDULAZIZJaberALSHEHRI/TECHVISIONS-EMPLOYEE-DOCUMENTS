@@ -1,14 +1,16 @@
 "use client";
 
 import { TrackingMatrix } from "@/components/tracking/TrackingMatrix";
+import { PageContainer, PageHeader } from "@/components/modern";
 
 export default function HRTrackingPage() {
   return (
-    <div className="animate-fade-in">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">
-        Tracking Matrix
-      </h1>
+    <PageContainer>
+      <PageHeader
+        title="Tracking Matrix"
+        description="Monitor and track all document request assignments"
+      />
       <TrackingMatrix />
-    </div>
+    </PageContainer>
   );
 }

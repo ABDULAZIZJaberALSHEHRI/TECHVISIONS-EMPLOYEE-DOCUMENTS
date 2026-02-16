@@ -1,5 +1,6 @@
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Topbar } from "@/components/layout/Topbar";
+import { TopNavBar } from "@/components/modern";
+import { SessionProvider } from "@/components/providers/SessionProvider";
+import { BackgroundWrapper } from "@/components/ui/background-wrapper";
 
 export default function AdminLayout({
   children,
@@ -7,12 +8,13 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar />
-      <div className="lg:ml-[280px]">
-        <Topbar />
-        <main className="mx-auto max-w-7xl p-4 lg:p-6">{children}</main>
-      </div>
-    </div>
+    <SessionProvider>
+      <BackgroundWrapper>
+        <div className="flex min-h-screen flex-col">
+          <TopNavBar />
+          <main className="flex-1 p-6 lg:p-8">{children}</main>
+        </div>
+      </BackgroundWrapper>
+    </SessionProvider>
   );
 }

@@ -17,6 +17,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { getInitials } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
 import { format } from "date-fns";
+import { PageContainer, PageHeader, TableContainer } from "@/components/modern";
 
 interface User {
   id: string;

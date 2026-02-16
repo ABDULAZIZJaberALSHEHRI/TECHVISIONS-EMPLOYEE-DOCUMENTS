@@ -2,10 +2,11 @@ module.exports = {
   apps: [{
     name: 'drms',
     script: '.next/standalone/server.js',
-    cwd: '/opt/drms',
+    cwd: '/home/opc/TECHVISIONS-EMPLOYEE-DOCUMENTS',
     env: {
       NODE_ENV: 'production',
       PORT: 3000,
+      HOSTNAME: '0.0.0.0',
     },
 
     // Cluster mode: set to number of OCPUs on your OCI VM
@@ -24,8 +25,8 @@ module.exports = {
     shutdown_with_message: true,
 
     // Logging
-    error_file: '/var/log/drms/pm2-error.log',
-    out_file: '/var/log/drms/pm2-out.log',
+    error_file: '/home/opc/.pm2/logs/drms-error.log',
+    out_file: '/home/opc/.pm2/logs/drms-out.log',
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     merge_logs: true,
     time: true,

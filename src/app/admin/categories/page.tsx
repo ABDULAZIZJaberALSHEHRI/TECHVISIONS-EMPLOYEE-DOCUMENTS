@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useToast } from "@/components/ui/use-toast";
@@ -17,6 +17,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Plus, Edit, Trash2, FolderOpen } from "lucide-react";
+import { PageContainer, PageHeader, SectionCard } from "@/components/modern";
 
 interface Category {
   id: string;
@@ -119,8 +120,19 @@ export default function CategoriesPage() {
       });
       const data = await res.json();
       if (data.success) {
-        toast({ title: "Category deleted" });
+        toast({
+          title: data.deactivated ? "Category deactivated" : "Category deleted",
+          description: data.deactivated
+            ? "Category has associated requests and was deactivated instead."
+            : undefined,
+        });
         fetchCategories();
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to delete category",
+          variant: "destructive",
+        });
       }
     } catch {
       toast({

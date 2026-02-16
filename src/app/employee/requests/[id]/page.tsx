@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { FileUpload } from "@/components/documents/FileUpload";
+import { MultiSlotFileUpload } from "@/components/documents/MultiSlotFileUpload";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { DocumentPreview } from "@/components/documents/DocumentPreview";
 import { PageLoader } from "@/components/shared/LoadingSpinner";
@@ -39,6 +40,8 @@ interface RequestDetail {
   acceptedFormats: string | null;
   maxFileSizeMb: number;
   notes: string | null;
+  templateUrl: string | null;
+  templateName: string | null;
   category: { name: string } | null;
   documentSlots?: DocumentSlot[];
   attachments: {
@@ -178,70 +181,68 @@ export default function EmployeeRequestDetailPage() {
         </Card>
       </div>
 
-      {/* Template Files */}
-      {request.attachments.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Paperclip className="h-4 w-4" />
-              Template / Reference Files
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {request.attachments.map((att) => (
-                <Button
-                  key={att.id}
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    window.open(
-                      `/api/documents/${att.id}/download`,
-                      "_blank"
-                    )
-                  }
-                >
-                  <Download className="mr-1 h-4 w-4" />
-                  {att.fileName}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Template / Reference Files */}
+      {(() => {
+        const validAttachments = request.attachments.filter((att) => att.fileName);
+        const hasFiles = request.templateName || validAttachments.length > 0;
+        if (!hasFiles) return null;
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Paperclip className="h-4 w-4" />
+                Template / Reference Files
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {request.templateName && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      window.open(
+                        `/api/requests/${request.id}/template`,
+                        "_blank"
+                      )
+                    }
+                  >
+                    <Download className="mr-1 h-4 w-4" />
+                    {request.templateName}
+                  </Button>
+                )}
+                {validAttachments.map((att) => (
+                  <Button
+                    key={att.id}
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      window.open(
+                        `/api/requests/${request.id}/attachments/${att.id}`,
+                        "_blank"
+                      )
+                    }
+                  >
+                    <Download className="mr-1 h-4 w-4" />
+                    {att.fileName}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
-      {/* Required Document Slots */}
-      {request.documentSlots && request.documentSlots.length > 0 && (
+      {/* Upload Area - Multi-Slot or Single */}
+      {canUpload && assignment && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Required Documents ({request.documentSlots.length})
+              {request.documentSlots && request.documentSlots.length > 0
+                ? `Upload Required Documents (${request.documentSlots.length})`
+                : "Upload Document"}
             </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {request.documentSlots.map((slot, index) => (
-                <div
-                  key={slot.id}
-                  className="flex items-center gap-3 rounded-lg border p-3"
-                >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">
-                    {index + 1}
-                  </span>
-                  <span className="text-sm font-medium">{slot.name}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Upload Area */}
-      {canUpload && assignment && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Upload Document</CardTitle>
           </CardHeader>
           <CardContent>
             {assignment.status === "REJECTED" && assignment.reviewNote && (
@@ -255,12 +256,24 @@ export default function EmployeeRequestDetailPage() {
                 </p>
               </div>
             )}
-            <FileUpload
-              assignmentId={assignment.id}
-              acceptedFormats={request.acceptedFormats || undefined}
-              maxFileSizeMb={request.maxFileSizeMb}
-              onUploadComplete={fetchRequest}
-            />
+
+            {/* Use MultiSlotFileUpload if document slots exist, otherwise use single FileUpload */}
+            {request.documentSlots && request.documentSlots.length > 0 ? (
+              <MultiSlotFileUpload
+                assignmentId={assignment.id}
+                documentSlots={request.documentSlots}
+                acceptedFormats={request.acceptedFormats || undefined}
+                maxFileSizeMb={request.maxFileSizeMb}
+                onUploadComplete={fetchRequest}
+              />
+            ) : (
+              <FileUpload
+                assignmentId={assignment.id}
+                acceptedFormats={request.acceptedFormats || undefined}
+                maxFileSizeMb={request.maxFileSizeMb}
+                onUploadComplete={fetchRequest}
+              />
+            )}
           </CardContent>
         </Card>
       )}

@@ -3,12 +3,13 @@
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { RequestCard } from "@/components/requests/RequestCard";
+import { BlobCard } from "@/components/requests/BlobCard";
 import { RequestFilters } from "@/components/requests/RequestFilters";
 import { PageLoader } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Plus, FileText } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
+import { PageContainer, PageHeader } from "@/components/modern";
 
 interface RequestItem {
   id: string;
@@ -21,6 +22,7 @@ interface RequestItem {
   createdBy: { id: string; name: string; email: string };
   assignedTo: { id: string; name: string; email: string } | null;
   _count: { assignments: number; attachments: number };
+  assignments: { id: string; status: string }[];
 }
 
 export default function DeptHeadRequestsPage() {
@@ -40,6 +42,7 @@ function DeptHeadRequestsContent() {
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
   const debouncedSearch = useDebounce(search, 300);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -77,6 +80,35 @@ function DeptHeadRequestsContent() {
     fetchRequests();
   }, [fetchRequests]);
 
+  const PRIORITY_ORDER: Record<string, number> = { LOW: 1, MEDIUM: 2, HIGH: 3, URGENT: 4 };
+
+  const sortedRequests = [...requests].sort((a, b) => {
+    switch (sortBy) {
+      case "oldest":
+        return 0;
+      case "deadline_asc":
+        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+      case "deadline_desc":
+        return new Date(b.deadline).getTime() - new Date(a.deadline).getTime();
+      case "priority_desc":
+        return (PRIORITY_ORDER[b.priority] || 0) - (PRIORITY_ORDER[a.priority] || 0);
+      case "priority_asc":
+        return (PRIORITY_ORDER[a.priority] || 0) - (PRIORITY_ORDER[b.priority] || 0);
+      case "submissions_desc": {
+        const aCount = a.assignments.filter((x) => x.status === "SUBMITTED" || x.status === "APPROVED").length;
+        const bCount = b.assignments.filter((x) => x.status === "SUBMITTED" || x.status === "APPROVED").length;
+        return bCount - aCount;
+      }
+      case "submissions_asc": {
+        const aCount = a.assignments.filter((x) => x.status === "SUBMITTED" || x.status === "APPROVED").length;
+        const bCount = b.assignments.filter((x) => x.status === "SUBMITTED" || x.status === "APPROVED").length;
+        return aCount - bCount;
+      }
+      default:
+        return 0;
+    }
+  });
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -96,11 +128,14 @@ function DeptHeadRequestsContent() {
         onPriorityChange={setPriority}
         categoryId={categoryId}
         onCategoryChange={setCategoryId}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
         onClear={() => {
           setSearch("");
           setStatus("");
           setPriority("");
           setCategoryId("");
+          setSortBy("newest");
         }}
       />
 
@@ -117,8 +152,8 @@ function DeptHeadRequestsContent() {
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {requests.map((req) => (
-              <RequestCard
+            {sortedRequests.map((req, index) => (
+              <BlobCard
                 key={req.id}
                 id={req.id}
                 title={req.title}
@@ -128,9 +163,11 @@ function DeptHeadRequestsContent() {
                 deadline={req.deadline}
                 categoryName={req.category?.name}
                 assignmentCount={req._count.assignments}
+                submittedCount={req.assignments.filter((a) => a.status === "SUBMITTED" || a.status === "APPROVED").length}
                 createdByName={req.createdBy.name}
                 assignedToName={req.assignedTo?.name}
                 basePath="/dept-head/requests"
+                animationDelay={index * 0.3}
               />
             ))}
           </div>

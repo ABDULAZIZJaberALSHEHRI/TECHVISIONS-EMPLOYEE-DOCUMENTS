@@ -12,7 +12,7 @@ interface LoadingSpinnerProps {
 const sizeMap = {
   sm: "h-4 w-4",
   md: "h-6 w-6",
-  lg: "h-10 w-10",
+  lg: "h-12 w-12",
 };
 
 export function LoadingSpinner({
@@ -21,9 +21,24 @@ export function LoadingSpinner({
   text,
 }: LoadingSpinnerProps) {
   return (
-    <div className={cn("flex items-center justify-center gap-2 animate-fade-in", className)}>
-      <Loader2 className={cn("animate-spin text-blue-500", sizeMap[size])} />
-      {text && <span className="text-sm text-gray-500">{text}</span>}
+    <div
+      className={cn(
+        "flex items-center justify-center gap-3 animate-fade-in",
+        className
+      )}
+    >
+      <div className="relative">
+        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 blur-md opacity-30" />
+        <Loader2
+          className={cn(
+            "relative animate-spin text-blue-600",
+            sizeMap[size]
+          )}
+        />
+      </div>
+      {text && (
+        <span className="text-sm font-medium text-slate-700">{text}</span>
+      )}
     </div>
   );
 }

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, X } from "lucide-react";
+import { Search, X, ArrowUpDown } from "lucide-react";
 
 interface Category {
   id: string;
@@ -26,6 +26,8 @@ interface RequestFiltersProps {
   onPriorityChange: (value: string) => void;
   categoryId?: string;
   onCategoryChange?: (value: string) => void;
+  sortBy?: string;
+  onSortChange?: (value: string) => void;
   onClear: () => void;
 }
 
@@ -38,6 +40,8 @@ export function RequestFilters({
   onPriorityChange,
   categoryId,
   onCategoryChange,
+  sortBy,
+  onSortChange,
   onClear,
 }: RequestFiltersProps) {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -104,6 +108,24 @@ export function RequestFilters({
                 {cat.name}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+      )}
+      {onSortChange && (
+        <Select value={sortBy || "newest"} onValueChange={onSortChange}>
+          <SelectTrigger className="w-[180px]">
+            <ArrowUpDown className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Newest First</SelectItem>
+            <SelectItem value="oldest">Oldest First</SelectItem>
+            <SelectItem value="deadline_asc">Deadline (Soonest)</SelectItem>
+            <SelectItem value="deadline_desc">Deadline (Latest)</SelectItem>
+            <SelectItem value="priority_desc">Priority (High → Low)</SelectItem>
+            <SelectItem value="priority_asc">Priority (Low → High)</SelectItem>
+            <SelectItem value="submissions_desc">Most Submissions</SelectItem>
+            <SelectItem value="submissions_asc">Least Submissions</SelectItem>
           </SelectContent>
         </Select>
       )}

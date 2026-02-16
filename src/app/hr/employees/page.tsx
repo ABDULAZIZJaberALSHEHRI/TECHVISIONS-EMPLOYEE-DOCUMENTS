@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { EmployeeTable } from "@/components/employees/EmployeeTable";
 import { useDebounce } from "@/hooks/useDebounce";
+import { PageContainer, PageHeader } from "@/components/modern";
 
 interface Employee {
   id: string;
@@ -51,8 +52,11 @@ export default function EmployeesPage() {
   }, [fetchEmployees]);
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
+    <PageContainer>
+      <PageHeader
+        title="Employees"
+        description="View and manage all employees in the organization"
+      />
       <EmployeeTable
         employees={employees}
         total={total}
@@ -65,6 +69,6 @@ export default function EmployeesPage() {
           setPage(1);
         }}
       />
-    </div>
+    </PageContainer>
   );
 }

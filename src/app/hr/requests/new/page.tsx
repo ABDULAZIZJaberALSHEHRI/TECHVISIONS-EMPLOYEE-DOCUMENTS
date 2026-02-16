@@ -1,14 +1,18 @@
 "use client";
 
 import { RequestForm } from "@/components/requests/RequestForm";
+import { PageContainer, PageHeader, FormContainer } from "@/components/modern";
 
 export default function NewRequestPage() {
   return (
-    <div className="animate-fade-in">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">
-        Create New Request
-      </h1>
-      <RequestForm />
-    </div>
+    <PageContainer>
+      <PageHeader
+        title="Create New Request"
+        description="Create a new document request for employees"
+      />
+      <FormContainer>
+        <RequestForm />
+      </FormContainer>
+    </PageContainer>
   );
 }

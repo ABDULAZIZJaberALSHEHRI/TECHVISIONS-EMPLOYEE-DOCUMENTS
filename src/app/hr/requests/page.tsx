@@ -3,12 +3,16 @@
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { RequestCard } from "@/components/requests/RequestCard";
+import { BlobCard } from "@/components/requests/BlobCard";
 import { RequestFilters } from "@/components/requests/RequestFilters";
 import { PageLoader } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Plus, Download, FileText } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useToast } from "@/components/ui/use-toast";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { PageContainer, PageHeader } from "@/components/modern";
 
 interface RequestItem {
   id: string;
@@ -21,6 +25,7 @@ interface RequestItem {
   createdBy: { id: string; name: string; email: string };
   assignedTo: { id: string; name: string; email: string } | null;
   _count: { assignments: number; attachments: number };
+  assignments: { id: string; status: string }[];
 }
 
 export default function HRRequestsPage() {
@@ -40,9 +45,17 @@ function HRRequestsContent() {
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
+  const { toast } = useToast();
+  const isAdmin = session?.user?.role === "ADMIN";
+  const currentUserId = session?.user?.id;
 
   useEffect(() => {
     const s = searchParams.get("status");
@@ -77,25 +90,81 @@ function HRRequestsContent() {
     fetchRequests();
   }, [fetchRequests]);
 
+  const PRIORITY_ORDER: Record<string, number> = { LOW: 1, MEDIUM: 2, HIGH: 3, URGENT: 4 };
+
+  const sortedRequests = [...requests].sort((a, b) => {
+    switch (sortBy) {
+      case "oldest":
+        return 0; // API already returns newest first, reverse not needed since we rely on index
+      case "deadline_asc":
+        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+      case "deadline_desc":
+        return new Date(b.deadline).getTime() - new Date(a.deadline).getTime();
+      case "priority_desc":
+        return (PRIORITY_ORDER[b.priority] || 0) - (PRIORITY_ORDER[a.priority] || 0);
+      case "priority_asc":
+        return (PRIORITY_ORDER[a.priority] || 0) - (PRIORITY_ORDER[b.priority] || 0);
+      case "submissions_desc": {
+        const aCount = a.assignments.filter((x) => x.status === "SUBMITTED" || x.status === "APPROVED").length;
+        const bCount = b.assignments.filter((x) => x.status === "SUBMITTED" || x.status === "APPROVED").length;
+        return bCount - aCount;
+      }
+      case "submissions_asc": {
+        const aCount = a.assignments.filter((x) => x.status === "SUBMITTED" || x.status === "APPROVED").length;
+        const bCount = b.assignments.filter((x) => x.status === "SUBMITTED" || x.status === "APPROVED").length;
+        return aCount - bCount;
+      }
+      default: // newest
+        return 0;
+    }
+  });
+
   const handleExport = () => {
     window.open("/api/requests/export", "_blank");
   };
 
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/requests/${deletingId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        toast({ title: "Success", description: "Request deleted successfully" });
+        setRequests((prev) => prev.filter((r) => r.id !== deletingId));
+        setTotal((prev) => prev - 1);
+      } else {
+        toast({ title: "Error", description: data.error || "Failed to delete request", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to delete request", variant: "destructive" });
+    }
+    setDeleting(false);
+    setDeleteDialogOpen(false);
+    setDeletingId(null);
+  };
+
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Document Requests</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-          <Button onClick={() => router.push("/hr/requests/new")}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Request
-          </Button>
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Document Requests"
+        description="Manage and track all document requests"
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExport} className="border-slate-300">
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </Button>
+            <Button
+              onClick={() => router.push("/hr/requests/new")}
+              className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-md"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New Request
+            </Button>
+          </div>
+        }
+      />
 
       <RequestFilters
         search={search}
@@ -106,11 +175,14 @@ function HRRequestsContent() {
         onPriorityChange={setPriority}
         categoryId={categoryId}
         onCategoryChange={setCategoryId}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
         onClear={() => {
           setSearch("");
           setStatus("");
           setPriority("");
           setCategoryId("");
+          setSortBy("newest");
         }}
       />
 
@@ -127,8 +199,8 @@ function HRRequestsContent() {
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {requests.map((req) => (
-              <RequestCard
+            {sortedRequests.map((req, index) => (
+              <BlobCard
                 key={req.id}
                 id={req.id}
                 title={req.title}
@@ -138,8 +210,15 @@ function HRRequestsContent() {
                 deadline={req.deadline}
                 categoryName={req.category?.name}
                 assignmentCount={req._count.assignments}
+                submittedCount={req.assignments.filter((a) => a.status === "SUBMITTED" || a.status === "APPROVED").length}
                 createdByName={req.createdBy.name}
                 assignedToName={req.assignedTo?.name}
+                animationDelay={index * 0.3}
+                showDelete={isAdmin || req.createdBy.id === currentUserId}
+                onDelete={(id) => {
+                  setDeletingId(id);
+                  setDeleteDialogOpen(true);
+                }}
               />
             ))}
           </div>
@@ -168,6 +247,20 @@ function HRRequestsContent() {
           )}
         </>
       )}
-    </div>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) setDeletingId(null);
+        }}
+        title="Delete Request"
+        description="Are you sure you want to delete this request? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
+    </PageContainer>
   );
 }

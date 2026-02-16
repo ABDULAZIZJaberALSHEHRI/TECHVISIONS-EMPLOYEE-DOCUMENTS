@@ -18,9 +18,10 @@ interface EmployeeSelectorProps {
   selectedIds: string[];
   onChange: (ids: string[]) => void;
   departmentFilter?: string;
+  excludeUserId?: string;
 }
 
-export function EmployeeSelector({ selectedIds, onChange, departmentFilter }: EmployeeSelectorProps) {
+export function EmployeeSelector({ selectedIds, onChange, departmentFilter, excludeUserId }: EmployeeSelectorProps) {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -47,7 +48,13 @@ export function EmployeeSelector({ selectedIds, onChange, departmentFilter }: Em
       .finally(() => setLoading(false));
   }, [departmentFilter]);
 
-  const filtered = employees.filter(
+  // Exclude the requester from the list, then apply search filter.
+  // Done at render time so it works regardless of session/fetch timing.
+  const availableEmployees = excludeUserId
+    ? employees.filter((e) => String(e.id) !== String(excludeUserId))
+    : employees;
+
+  const filtered = availableEmployees.filter(
     (e) =>
       e.name.toLowerCase().includes(search.toLowerCase()) ||
       e.email.toLowerCase().includes(search.toLowerCase()) ||

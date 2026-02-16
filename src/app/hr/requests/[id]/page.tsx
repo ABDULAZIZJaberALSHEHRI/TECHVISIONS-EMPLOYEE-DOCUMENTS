@@ -2,11 +2,13 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { AssignmentTable } from "@/components/requests/AssignmentTable";
+import { EditRequestModal } from "@/components/requests/EditRequestModal";
 import { DocumentPreview } from "@/components/documents/DocumentPreview";
 import { PageLoader } from "@/components/shared/LoadingSpinner";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -17,9 +19,11 @@ import {
   Users,
   Download,
   Bell,
-  XCircle,
   FileText,
   Paperclip,
+  Loader2,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -47,6 +51,8 @@ interface RequestDetail {
   acceptedFormats: string | null;
   maxFileSizeMb: number;
   notes: string | null;
+  templateUrl: string | null;
+  templateName: string | null;
   createdAt: string;
   category: { id: string; name: string } | null;
   createdBy: { id: string; name: string; email: string };
@@ -88,7 +94,9 @@ export default function RequestDetailPage() {
   const [request, setRequest] = useState<RequestDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<{
     id: string;
     fileName: string;
@@ -97,6 +105,9 @@ export default function RequestDetailPage() {
   const [reminding, setReminding] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const { data: session } = useSession();
+
+  const isCreator = session?.user?.id === request?.createdBy.id;
 
   const fetchRequest = useCallback(async () => {
     try {
@@ -119,26 +130,26 @@ export default function RequestDetailPage() {
     fetchRequest();
   }, [fetchRequest]);
 
-  const handleCancel = async () => {
+  const handleDelete = async () => {
+    setDeleting(true);
     try {
-      const res = await fetch(`/api/requests/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "CANCELLED" }),
-      });
+      const res = await fetch(`/api/requests/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
-        toast({ title: "Request cancelled" });
-        fetchRequest();
+        toast({ title: "Success", description: "Request deleted successfully" });
+        router.push("/hr/requests");
+      } else {
+        toast({ title: "Error", description: data.error, variant: "destructive" });
       }
     } catch {
       toast({
         title: "Error",
-        description: "Failed to cancel request",
+        description: "Failed to delete request",
         variant: "destructive",
       });
     }
-    setCancelDialogOpen(false);
+    setDeleting(false);
+    setDeleteDialogOpen(false);
   };
 
   const handleRemind = async () => {
@@ -165,8 +176,35 @@ export default function RequestDetailPage() {
     setReminding(false);
   };
 
-  const handleDownloadAll = () => {
-    window.open(`/api/requests/${id}/download`, "_blank");
+  const [downloadingAll, setDownloadingAll] = useState(false);
+
+  const handleDownloadAll = async () => {
+    setDownloadingAll(true);
+    try {
+      const response = await fetch(`/api/requests/${id}/download`);
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "Download failed" }));
+        toast({ title: "Error", description: error.error || "Download failed", variant: "destructive" });
+        return;
+      }
+      const blob = await response.blob();
+      const disposition = response.headers.get("Content-Disposition");
+      const fileNameMatch = disposition?.match(/filename="?([^"]+)"?/);
+      const fileName = fileNameMatch?.[1] || "documents.zip";
+
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch {
+      toast({ title: "Error", description: "Failed to download files", variant: "destructive" });
+    } finally {
+      setDownloadingAll(false);
+    }
   };
 
   if (loading) return <PageLoader />;
@@ -201,23 +239,33 @@ export default function RequestDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          {isCreator && request.status !== "CANCELLED" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditModalOpen(true)}
+            >
+              <Pencil className="mr-1 h-4 w-4" />
+              Edit
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handleRemind} disabled={reminding}>
             <Bell className="mr-1 h-4 w-4" />
             {reminding ? "Sending..." : "Remind"}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleDownloadAll}>
-            <Download className="mr-1 h-4 w-4" />
-            Download All
+          <Button variant="outline" size="sm" onClick={handleDownloadAll} disabled={downloadingAll}>
+            {downloadingAll ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Download className="mr-1 h-4 w-4" />}
+            {downloadingAll ? "Downloading..." : "Download All"}
           </Button>
-          {request.status === "OPEN" && (
+          {isCreator && (
             <Button
               variant="outline"
               size="sm"
               className="text-red-600 hover:bg-red-50"
-              onClick={() => setCancelDialogOpen(true)}
+              onClick={() => setDeleteDialogOpen(true)}
             >
-              <XCircle className="mr-1 h-4 w-4" />
-              Cancel
+              <Trash2 className="mr-1 h-4 w-4" />
+              Delete
             </Button>
           )}
         </div>
@@ -274,37 +322,57 @@ export default function RequestDetailPage() {
         </Card>
       </div>
 
-      {/* Attachments */}
-      {request.attachments.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Paperclip className="h-4 w-4" />
-              Template Files
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {request.attachments.map((att) => (
-                <Button
-                  key={att.id}
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    window.open(
-                      `/api/documents/${att.id}/download`,
-                      "_blank"
-                    )
-                  }
-                >
-                  <FileText className="mr-1 h-4 w-4" />
-                  {att.fileName}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Template / Attachments */}
+      {(() => {
+        const validAttachments = request.attachments.filter((att) => att.fileName);
+        const hasFiles = request.templateName || validAttachments.length > 0;
+        if (!hasFiles) return null;
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Paperclip className="h-4 w-4" />
+                Template / Reference Files
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {request.templateName && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      window.open(
+                        `/api/requests/${request.id}/template`,
+                        "_blank"
+                      )
+                    }
+                  >
+                    <FileText className="mr-1 h-4 w-4" />
+                    {request.templateName}
+                  </Button>
+                )}
+                {validAttachments.map((att) => (
+                  <Button
+                    key={att.id}
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      window.open(
+                        `/api/requests/${request.id}/attachments/${att.id}`,
+                        "_blank"
+                      )
+                    }
+                  >
+                    <FileText className="mr-1 h-4 w-4" />
+                    {att.fileName}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Document Slots */}
       {request.documentSlots && request.documentSlots.length > 0 && (
@@ -346,14 +414,26 @@ export default function RequestDetailPage() {
         </CardContent>
       </Card>
 
+      {/* Edit Modal */}
+      {request && (
+        <EditRequestModal
+          open={editModalOpen}
+          onOpenChange={setEditModalOpen}
+          request={request}
+          onSuccess={fetchRequest}
+        />
+      )}
+
+      {/* Delete Confirmation */}
       <ConfirmDialog
-        open={cancelDialogOpen}
-        onOpenChange={setCancelDialogOpen}
-        title="Cancel Request"
-        description="Are you sure you want to cancel this request? All assigned employees will be notified."
-        confirmLabel="Cancel Request"
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Request"
+        description="Are you sure you want to permanently delete this request? This will remove all assignments, submitted documents, and uploaded files. This action cannot be undone."
+        confirmLabel="Delete Request"
         variant="destructive"
-        onConfirm={handleCancel}
+        onConfirm={handleDelete}
+        loading={deleting}
       />
 
       {/* Preview Dialog */}

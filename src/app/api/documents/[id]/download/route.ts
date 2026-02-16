@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, isNextResponse } from "@/lib/auth-guard";
-import { getAbsolutePath } from "@/lib/upload";
-import { readFile } from "fs/promises";
-import { existsSync } from "fs";
+import { getFileBuffer } from "@/lib/upload";
 
 export async function GET(
   request: NextRequest,
@@ -39,21 +37,19 @@ export async function GET(
       );
     }
 
-    const absolutePath = getAbsolutePath(document.filePath);
+    const fileBuffer = await getFileBuffer(document.filePath);
 
-    if (!existsSync(absolutePath)) {
-      return NextResponse.json(
-        { success: false, error: "File not found on disk" },
-        { status: 404 }
-      );
-    }
+    // Check if preview mode (for inline display) or download mode
+    const { searchParams } = new URL(request.url);
+    const isPreview = searchParams.get("preview") === "true";
+    const disposition = isPreview
+      ? `inline; filename="${document.fileName}"`
+      : `attachment; filename="${document.fileName}"`;
 
-    const fileBuffer = await readFile(absolutePath);
-
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(new Uint8Array(fileBuffer), {
       headers: {
         "Content-Type": document.mimeType,
-        "Content-Disposition": `attachment; filename="${document.fileName}"`,
+        "Content-Disposition": disposition,
         "Content-Length": String(document.fileSize),
       },
     });

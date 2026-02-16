@@ -1,19 +1,12 @@
-import { writeFile, mkdir, unlink } from "fs/promises";
-import { existsSync } from "fs";
 import path from "path";
 import { MIME_TYPE_MAP } from "@/lib/constants";
-
-const UPLOAD_DIR = process.env.UPLOAD_DIR || "./uploads";
+import { uploadToS3, downloadFromS3, deleteFromS3, deletePrefix } from "@/lib/storage";
 
 function sanitizeFilename(filename: string): string {
   return filename
     .replace(/[^a-zA-Z0-9._-]/g, "_")
     .replace(/_{2,}/g, "_")
     .substring(0, 200);
-}
-
-export function getUploadDir(): string {
-  return path.resolve(UPLOAD_DIR);
 }
 
 export function getAllowedMimeTypes(acceptedFormats: string): string[] {
@@ -33,7 +26,7 @@ export function validateFileType(
   acceptedFormats: string
 ): boolean {
   const allowedMimes = getAllowedMimeTypes(acceptedFormats);
-  if (allowedMimes.length === 0) return true; // No restriction
+  if (allowedMimes.length === 0) return true;
   return allowedMimes.includes(mimeType);
 }
 
@@ -58,24 +51,17 @@ export async function saveFile(
   fileSize: number;
   mimeType: string;
 }> {
-  const uploadBase = getUploadDir();
-  const dirPath = path.join(uploadBase, requestId, assignmentId);
-
-  if (!existsSync(dirPath)) {
-    await mkdir(dirPath, { recursive: true });
-  }
-
   const timestamp = Date.now();
   const sanitized = sanitizeFilename(file.name);
   const fileName = `${timestamp}-${sanitized}`;
-  const filePath = path.join(dirPath, fileName);
+  const key = `${requestId}/${assignmentId}/${fileName}`;
 
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
-  await writeFile(filePath, buffer);
+  await uploadToS3(key, buffer, file.type);
 
   return {
-    filePath: path.relative(uploadBase, filePath),
+    filePath: key,
     fileName: file.name,
     fileSize: buffer.length,
     mimeType: file.type,
@@ -91,24 +77,17 @@ export async function saveAttachment(
   fileSize: number;
   mimeType: string;
 }> {
-  const uploadBase = getUploadDir();
-  const dirPath = path.join(uploadBase, requestId, "attachments");
-
-  if (!existsSync(dirPath)) {
-    await mkdir(dirPath, { recursive: true });
-  }
-
   const timestamp = Date.now();
   const sanitized = sanitizeFilename(file.name);
   const fileName = `${timestamp}-${sanitized}`;
-  const filePath = path.join(dirPath, fileName);
+  const key = `${requestId}/attachments/${fileName}`;
 
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
-  await writeFile(filePath, buffer);
+  await uploadToS3(key, buffer, file.type);
 
   return {
-    filePath: path.relative(uploadBase, filePath),
+    filePath: key,
     fileName: file.name,
     fileSize: buffer.length,
     mimeType: file.type,
@@ -116,18 +95,21 @@ export async function saveAttachment(
 }
 
 export async function deleteFile(relativePath: string): Promise<void> {
-  const fullPath = path.join(getUploadDir(), relativePath);
   try {
-    if (existsSync(fullPath)) {
-      await unlink(fullPath);
-    }
+    await deleteFromS3(relativePath);
   } catch (error) {
-    console.error("Error deleting file:", error);
+    console.error("Error deleting file from S3:", error);
   }
 }
 
+export async function getFileBuffer(relativePath: string): Promise<Buffer> {
+  return downloadFromS3(relativePath);
+}
+
 export function getAbsolutePath(relativePath: string): string {
-  return path.join(getUploadDir(), relativePath);
+  // For S3, the relativePath is the S3 key. This function is kept
+  // for backward compatibility but callers should use getFileBuffer instead.
+  return relativePath;
 }
 
 // Template file handling
@@ -162,23 +144,16 @@ export async function saveTemplateFile(
   fileSize: number;
   mimeType: string;
 }> {
-  const uploadBase = getUploadDir();
-  const dirPath = path.join(uploadBase, TEMPLATE_DIR, requestId);
-
-  if (!existsSync(dirPath)) {
-    await mkdir(dirPath, { recursive: true });
-  }
-
   const sanitized = sanitizeFilename(file.name);
   const fileName = `template-${sanitized}`;
-  const filePath = path.join(dirPath, fileName);
+  const key = `${TEMPLATE_DIR}/${requestId}/${fileName}`;
 
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
-  await writeFile(filePath, buffer);
+  await uploadToS3(key, buffer, file.type);
 
   return {
-    filePath: path.relative(uploadBase, filePath),
+    filePath: key,
     fileName: file.name,
     fileSize: buffer.length,
     mimeType: file.type,
@@ -186,22 +161,14 @@ export async function saveTemplateFile(
 }
 
 export async function deleteTemplateFile(requestId: string): Promise<void> {
-  const dirPath = path.join(getUploadDir(), TEMPLATE_DIR, requestId);
   try {
-    if (existsSync(dirPath)) {
-      const { readdir } = await import("fs/promises");
-      const files = await readdir(dirPath);
-      for (const f of files) {
-        await unlink(path.join(dirPath, f));
-      }
-      const { rmdir } = await import("fs/promises");
-      await rmdir(dirPath);
-    }
+    await deletePrefix(`${TEMPLATE_DIR}/${requestId}/`);
   } catch (error) {
-    console.error("Error deleting template files:", error);
+    console.error("Error deleting template files from S3:", error);
   }
 }
 
 export function getTemplateFilePath(relativePath: string): string {
-  return path.join(getUploadDir(), relativePath);
+  // For S3, the relativePath is the S3 key.
+  return relativePath;
 }

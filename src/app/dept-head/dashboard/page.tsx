@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoader } from "@/components/shared/LoadingSpinner";
-import { StatsCard } from "@/components/dashboard/StatsCard";
 import {
   FileText,
   Users,
@@ -16,6 +15,8 @@ import {
   Grid3X3,
 } from "lucide-react";
 import Link from "next/link";
+import { PageContainer, PageHeader, ModernStatsCard, SectionCard } from "@/components/modern";
+import { useRouter } from "next/navigation";
 
 interface TrackingSummary {
   totalEmployees: number;
@@ -80,29 +81,33 @@ export default function DeptHeadDashboardPage() {
 
       {summary && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatsCard
+          <ModernStatsCard
             title="Department Employees"
             value={summary.totalEmployees}
             icon={<Users className="h-5 w-5" />}
             color="blue"
+            gradient
           />
-          <StatsCard
+          <ModernStatsCard
             title="Active Assignments"
             value={summary.totalRequests}
             icon={<FileText className="h-5 w-5" />}
             color="yellow"
+            gradient
           />
-          <StatsCard
+          <ModernStatsCard
             title="Completion Rate"
             value={summary.completionRate}
             icon={<CheckCircle className="h-5 w-5" />}
             color="green"
+            gradient
           />
-          <StatsCard
+          <ModernStatsCard
             title="Overdue"
             value={summary.overdue}
             icon={<AlertTriangle className="h-5 w-5" />}
             color="red"
+            gradient
           />
         </div>
       )}

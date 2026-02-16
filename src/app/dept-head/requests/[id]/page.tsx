@@ -1,16 +1,19 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { AssignmentTable } from "@/components/requests/AssignmentTable";
+import { EditRequestModal } from "@/components/requests/EditRequestModal";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { PageLoader } from "@/components/shared/LoadingSpinner";
 import { useToast } from "@/components/ui/use-toast";
 import { REQUEST_STATUS_CONFIG } from "@/lib/constants";
-import { Calendar, Users, Download, Bell, FileText, Paperclip } from "lucide-react";
+import { Calendar, Users, Download, Bell, FileText, Paperclip, Loader2, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import type { Priority, RequestStatus, AssignmentStatus } from "@prisma/client";
 
@@ -70,10 +73,47 @@ interface RequestDetail {
 
 export default function DeptHeadRequestDetailPage() {
   const { id } = useParams();
+  const router = useRouter();
+  const { data: session } = useSession();
   const [request, setRequest] = useState<RequestDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [reminding, setReminding] = useState(false);
+  const [downloadingAll, setDownloadingAll] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
+
+  const isCreator = session?.user?.id === request?.createdBy.id;
+
+  const handleDownloadAll = async () => {
+    setDownloadingAll(true);
+    try {
+      const response = await fetch(`/api/requests/${id}/download`);
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "Download failed" }));
+        toast({ title: "Error", description: error.error || "Download failed", variant: "destructive" });
+        return;
+      }
+      const blob = await response.blob();
+      const disposition = response.headers.get("Content-Disposition");
+      const fileNameMatch = disposition?.match(/filename="?([^"]+)"?/);
+      const fileName = fileNameMatch?.[1] || "documents.zip";
+
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch {
+      toast({ title: "Error", description: "Failed to download files", variant: "destructive" });
+    } finally {
+      setDownloadingAll(false);
+    }
+  };
 
   const fetchRequest = useCallback(async () => {
     try {
@@ -107,6 +147,24 @@ export default function DeptHeadRequestDetailPage() {
     setReminding(false);
   };
 
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/requests/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        toast({ title: "Success", description: "Request deleted successfully" });
+        router.push("/dept-head/requests");
+      } else {
+        toast({ title: "Error", description: data.error, variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to delete request", variant: "destructive" });
+    }
+    setDeleting(false);
+    setDeleteDialogOpen(false);
+  };
+
   if (loading) return <PageLoader />;
   if (!request) return <div>Request not found</div>;
 
@@ -128,6 +186,16 @@ export default function DeptHeadRequestDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          {isCreator && request.status !== "CANCELLED" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditModalOpen(true)}
+            >
+              <Pencil className="mr-1 h-4 w-4" />
+              Edit
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handleRemind} disabled={reminding}>
             <Bell className="mr-1 h-4 w-4" />
             {reminding ? "Sending..." : "Remind"}
@@ -135,11 +203,23 @@ export default function DeptHeadRequestDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.open(`/api/requests/${id}/download`, "_blank")}
+            onClick={handleDownloadAll}
+            disabled={downloadingAll}
           >
-            <Download className="mr-1 h-4 w-4" />
-            Download All
+            {downloadingAll ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Download className="mr-1 h-4 w-4" />}
+            {downloadingAll ? "Downloading..." : "Download All"}
           </Button>
+          {isCreator && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-red-600 hover:bg-red-50"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2 className="mr-1 h-4 w-4" />
+              Delete
+            </Button>
+          )}
         </div>
       </div>
 
@@ -195,31 +275,46 @@ export default function DeptHeadRequestDetailPage() {
         </Card>
       </div>
 
-      {request.attachments.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Paperclip className="h-4 w-4" />
-              Attachments
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {request.attachments.map((att) => (
-                <Button
-                  key={att.id}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(`/api/documents/${att.id}/download`, "_blank")}
-                >
-                  <FileText className="mr-1 h-4 w-4" />
-                  {att.fileName}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {(() => {
+        const validAttachments = request.attachments.filter((att: { fileName: string }) => att.fileName);
+        const hasFiles = request.templateName || validAttachments.length > 0;
+        if (!hasFiles) return null;
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Paperclip className="h-4 w-4" />
+                Template / Reference Files
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {request.templateName && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(`/api/requests/${request.id}/template`, "_blank")}
+                  >
+                    <FileText className="mr-1 h-4 w-4" />
+                    {request.templateName}
+                  </Button>
+                )}
+                {validAttachments.map((att: { id: string; fileName: string }) => (
+                  <Button
+                    key={att.id}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(`/api/requests/${request.id}/attachments/${att.id}`, "_blank")}
+                  >
+                    <FileText className="mr-1 h-4 w-4" />
+                    {att.fileName}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Document Slots */}
       {request.documentSlots && request.documentSlots.length > 0 && (
@@ -259,6 +354,28 @@ export default function DeptHeadRequestDetailPage() {
           />
         </CardContent>
       </Card>
+
+      {/* Edit Modal */}
+      {request && (
+        <EditRequestModal
+          open={editModalOpen}
+          onOpenChange={setEditModalOpen}
+          request={request}
+          onSuccess={fetchRequest}
+        />
+      )}
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Request"
+        description="Are you sure you want to permanently delete this request? This will remove all assignments, submitted documents, and uploaded files. This action cannot be undone."
+        confirmLabel="Delete Request"
+        variant="destructive"
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
     </div>
   );
 }

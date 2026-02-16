@@ -6,10 +6,8 @@ import {
   saveTemplateFile,
   deleteTemplateFile,
   validateTemplateFile,
-  getTemplateFilePath,
+  getFileBuffer,
 } from "@/lib/upload";
-import { existsSync } from "fs";
-import { stat } from "fs/promises";
 import path from "path";
 
 export async function GET(
@@ -72,15 +70,8 @@ export async function GET(
     }
     // ADMIN: no restriction
 
-    const filePath = getTemplateFilePath(docRequest.templateUrl);
-    if (!existsSync(filePath)) {
-      return NextResponse.json(
-        { success: false, error: "Template file not found on disk" },
-        { status: 404 }
-      );
-    }
+    const fileBuffer = await getFileBuffer(docRequest.templateUrl);
 
-    const fileStat = await stat(filePath);
     const ext = path.extname(docRequest.templateName || "file").toLowerCase();
     const mimeMap: Record<string, string> = {
       ".pdf": "application/pdf",
@@ -94,14 +85,11 @@ export async function GET(
     };
     const contentType = mimeMap[ext] || "application/octet-stream";
 
-    const { readFile } = await import("fs/promises");
-    const fileBuffer = await readFile(filePath);
-
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(new Uint8Array(fileBuffer), {
       headers: {
         "Content-Type": contentType,
         "Content-Disposition": `attachment; filename="${docRequest.templateName || "template"}"`,
-        "Content-Length": fileStat.size.toString(),
+        "Content-Length": fileBuffer.length.toString(),
       },
     });
   } catch (error) {

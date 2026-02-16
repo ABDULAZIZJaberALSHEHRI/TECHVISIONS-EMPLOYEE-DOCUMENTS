@@ -20,9 +20,10 @@ interface HRSelectorProps {
   value?: string;
   onChange: (hrId: string | undefined) => void;
   disabled?: boolean;
+  excludeUserId?: string;
 }
 
-export function HRSelector({ value, onChange, disabled }: HRSelectorProps) {
+export function HRSelector({ value, onChange, disabled, excludeUserId }: HRSelectorProps) {
   const [hrUsers, setHrUsers] = useState<HRUser[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -49,7 +50,7 @@ export function HRSelector({ value, onChange, disabled }: HRSelectorProps) {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="NONE">Not Assigned</SelectItem>
-          {hrUsers.map((hr) => (
+          {hrUsers.filter((hr) => !excludeUserId || String(hr.id) !== String(excludeUserId)).map((hr) => (
             <SelectItem key={hr.id} value={hr.id}>
               {hr.name} ({hr.email})
             </SelectItem>

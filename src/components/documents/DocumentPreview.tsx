@@ -13,13 +13,14 @@ export function DocumentPreview({
   fileName,
   mimeType,
 }: DocumentPreviewProps) {
-  const downloadUrl = `/api/documents/${documentId}/download`;
+  // Use preview mode to display inline instead of forcing download
+  const previewUrl = `/api/documents/${documentId}/download?preview=true`;
 
   if (mimeType === "application/pdf") {
     return (
       <div className="rounded-lg border overflow-hidden">
         <iframe
-          src={downloadUrl}
+          src={previewUrl}
           className="h-[500px] w-full"
           title={fileName}
         />
@@ -31,7 +32,7 @@ export function DocumentPreview({
     return (
       <div className="rounded-lg border overflow-hidden flex items-center justify-center bg-gray-50 p-4">
         <img
-          src={downloadUrl}
+          src={previewUrl}
           alt={fileName}
           className="max-h-[500px] max-w-full object-contain"
         />

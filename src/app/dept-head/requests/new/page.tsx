@@ -1,14 +1,18 @@
 "use client";
 
 import { RequestForm } from "@/components/requests/RequestForm";
+import { PageContainer, PageHeader, FormContainer } from "@/components/modern";
 
 export default function DeptHeadNewRequestPage() {
   return (
-    <div className="animate-fade-in">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">
-        Create Department Request
-      </h1>
-      <RequestForm redirectPath="/dept-head/requests" />
-    </div>
+    <PageContainer>
+      <PageHeader
+        title="Create Department Request"
+        description="Create a document request for your department members"
+      />
+      <FormContainer>
+        <RequestForm redirectPath="/dept-head/requests" />
+      </FormContainer>
+    </PageContainer>
   );
 }

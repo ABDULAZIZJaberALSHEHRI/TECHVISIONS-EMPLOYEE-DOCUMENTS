@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { FileText, Download, Paperclip } from "lucide-react";
 import type { AssignmentStatus, Priority } from "@prisma/client";
+import { PageContainer, PageHeader, GradientCard } from "@/components/modern";
 
 interface RequestItem {
   id: string;
@@ -128,7 +129,7 @@ export default function MyDocumentsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <h1 className="text-2xl font-bold text-gray-900">My Documents</h1>
+      <h1 className="text-2xl font-bold text-gray-900">Requests</h1>
 
       <Tabs defaultValue="all">
         <TabsList>

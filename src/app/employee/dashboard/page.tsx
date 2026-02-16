@@ -1,12 +1,16 @@
 "use client";
 
 import { EmployeeDashboard } from "@/components/dashboard/EmployeeDashboard";
+import { PageContainer, PageHeader } from "@/components/modern";
 
 export default function EmployeeDashboardPage() {
   return (
-    <div className="animate-fade-in">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">My Dashboard</h1>
+    <PageContainer>
+      <PageHeader
+        title="My Dashboard"
+        description="View your pending document requests and tasks"
+      />
       <EmployeeDashboard />
-    </div>
+    </PageContainer>
   );
 }

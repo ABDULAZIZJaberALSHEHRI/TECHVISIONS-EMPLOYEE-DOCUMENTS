@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import fs from "fs";
-import path from "path";
+import { S3Client, HeadBucketCommand } from "@aws-sdk/client-s3";
 
 export const dynamic = "force-dynamic";
 
@@ -21,20 +20,30 @@ export async function GET() {
     };
   }
 
-  // Upload directory check
-  const uploadDir = process.env.UPLOAD_DIR || "./uploads";
+  // S3 storage check
   try {
-    const resolvedPath = path.resolve(uploadDir);
-    if (fs.existsSync(resolvedPath)) {
-      fs.accessSync(resolvedPath, fs.constants.W_OK | fs.constants.R_OK);
-      checks.storage = { status: "ok" };
+    const s3 = new S3Client({
+      region: process.env.OCI_REGION || "me-riyadh-1",
+      endpoint: process.env.OCI_ENDPOINT,
+      credentials: {
+        accessKeyId: process.env.OCI_ACCESS_KEY || "",
+        secretAccessKey: process.env.OCI_SECRET_KEY || "",
+      },
+      forcePathStyle: true,
+    });
+    await s3.send(new HeadBucketCommand({ Bucket: process.env.OCI_BUCKET || "drms-uploads" }));
+    checks.storage = { status: "ok" };
+  } catch (error) {
+    // If credentials are not set, mark as warning rather than error
+    if (!process.env.OCI_ACCESS_KEY) {
+      checks.storage = { status: "warning", message: "S3 credentials not configured" };
     } else {
       healthy = false;
-      checks.storage = { status: "error", message: "Upload directory does not exist" };
+      checks.storage = {
+        status: "error",
+        message: error instanceof Error ? error.message : "S3 bucket unreachable",
+      };
     }
-  } catch {
-    healthy = false;
-    checks.storage = { status: "error", message: "Upload directory not writable" };
   }
 
   const response = {

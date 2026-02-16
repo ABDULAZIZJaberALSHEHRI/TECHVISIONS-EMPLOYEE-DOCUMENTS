@@ -1,14 +1,16 @@
 "use client";
 
 import { TrackingMatrix } from "@/components/tracking/TrackingMatrix";
+import { PageContainer, PageHeader } from "@/components/modern";
 
 export default function DeptHeadTrackingPage() {
   return (
-    <div className="animate-fade-in">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">
-        Department Tracking Matrix
-      </h1>
+    <PageContainer>
+      <PageHeader
+        title="Department Tracking Matrix"
+        description="Monitor document submissions for your department"
+      />
       <TrackingMatrix />
-    </div>
+    </PageContainer>
   );
 }

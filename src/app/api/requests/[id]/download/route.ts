@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole, isNextResponse } from "@/lib/auth-guard";
-import { getUploadDir } from "@/lib/upload";
+import { getFileBuffer } from "@/lib/upload";
 import archiver from "archiver";
-import path from "path";
-import { createReadStream, existsSync } from "fs";
 import { PassThrough } from "stream";
 
 export async function GET(
@@ -45,7 +43,6 @@ export async function GET(
       );
     }
 
-    const uploadDir = getUploadDir();
     const archive = archiver("zip", { zlib: { level: 5 } });
     const passthrough = new PassThrough();
     archive.pipe(passthrough);
@@ -53,13 +50,15 @@ export async function GET(
     let fileCount = 0;
     for (const assignment of docRequest.assignments) {
       for (const doc of assignment.documents) {
-        const filePath = path.join(uploadDir, doc.filePath);
-        if (existsSync(filePath)) {
+        try {
+          const buffer = await getFileBuffer(doc.filePath);
           const folderName = assignment.employee.name.replace(/[^a-zA-Z0-9]/g, "_");
-          archive.append(createReadStream(filePath), {
+          archive.append(buffer, {
             name: `${folderName}/${doc.fileName}`,
           });
           fileCount++;
+        } catch {
+          console.warn(`File not found in S3: ${doc.filePath}`);
         }
       }
     }
@@ -81,7 +80,7 @@ export async function GET(
 
     const safeTitle = docRequest.title.replace(/[^a-zA-Z0-9]/g, "_");
 
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type": "application/zip",
         "Content-Disposition": `attachment; filename="${safeTitle}_documents.zip"`,

@@ -285,6 +285,9 @@ export async function POST(request: NextRequest) {
       targetEmployeeIds = employees.map((e) => e.id);
     }
 
+    // Exclude the requester from recipients (defense in depth)
+    targetEmployeeIds = targetEmployeeIds.filter((id) => id !== user.id);
+
     if (targetEmployeeIds.length === 0) {
       return NextResponse.json(
         { success: false, error: "No employees selected for assignment" },

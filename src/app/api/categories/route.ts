@@ -157,7 +157,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    if (category._count.requests > 0) {
+    const deactivated = category._count.requests > 0;
+
+    if (deactivated) {
       await prisma.category.update({
         where: { id },
         data: { isActive: false },
@@ -168,14 +170,20 @@ export async function DELETE(request: NextRequest) {
 
     await createAuditLog({
       userId: user.id,
-      action: "DELETE_CATEGORY",
+      action: deactivated ? "DEACTIVATE_CATEGORY" : "DELETE_CATEGORY",
       entityType: "category",
       entityId: id,
-      details: { name: category.name },
+      details: { name: category.name, deactivated },
       ipAddress: getClientIp(request),
     });
 
-    return NextResponse.json({ success: true, message: "Category deleted" });
+    return NextResponse.json({
+      success: true,
+      deactivated,
+      message: deactivated
+        ? "Category deactivated (has associated requests)"
+        : "Category deleted",
+    });
   } catch (error) {
     console.error("DELETE /api/categories error:", error);
     return NextResponse.json(
