@@ -19,7 +19,10 @@ import {
   Sparkles,
   Menu,
   X,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -38,6 +41,12 @@ export function TopNavBar() {
   const role = session?.user?.role;
   const [incomingCount, setIncomingCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // PRESERVED LOGIC: Fetch pending assigned count for HR badge
   useEffect(() => {
@@ -159,7 +168,7 @@ export function TopNavBar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-sm">
+    <nav className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-sm">
       <div className="mx-auto flex h-16 items-center justify-between px-4 lg:px-6">
         {/* Logo */}
         <div className="flex items-center gap-3">
@@ -167,8 +176,8 @@ export function TopNavBar() {
             <Sparkles className="h-4 w-4" />
           </div>
           <div className="hidden md:block">
-            <h1 className="text-lg font-bold text-slate-900">DRMS</h1>
-            <p className="text-xs text-slate-500">Document Management</p>
+            <h1 className="text-lg font-bold text-slate-900 dark:text-white">DRMS</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Document Management</p>
           </div>
         </div>
 
@@ -187,7 +196,7 @@ export function TopNavBar() {
                   "relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
                   isActive
                     ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md shadow-blue-500/20"
-                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
                 )}
               >
                 {item.icon}
@@ -211,12 +220,28 @@ export function TopNavBar() {
 
         {/* Right Section */}
         <div className="flex items-center gap-2">
+          {/* Theme Toggle */}
+          {mounted && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
+          )}
+
           {/* Sign Out Button - Desktop */}
           <Button
             variant="ghost"
             size="sm"
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="hidden lg:flex items-center gap-2 text-slate-700 hover:text-red-600 hover:bg-red-50"
+            className="hidden lg:flex items-center gap-2 text-slate-700 dark:text-slate-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
           >
             <LogOut className="h-4 w-4" />
             <span>Sign Out</span>
@@ -238,8 +263,8 @@ export function TopNavBar() {
                       <Sparkles className="h-4 w-4" />
                     </div>
                     <div>
-                      <h2 className="text-sm font-bold text-slate-900">DRMS</h2>
-                      <p className="text-xs text-slate-500">Menu</p>
+                      <h2 className="text-sm font-bold text-slate-900 dark:text-white">DRMS</h2>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Menu</p>
                     </div>
                   </div>
                 </div>
@@ -259,7 +284,7 @@ export function TopNavBar() {
                           "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all",
                           isActive
                             ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md"
-                            : "text-slate-700 hover:bg-slate-100"
+                            : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                         )}
                       >
                         {item.icon}
@@ -289,7 +314,7 @@ export function TopNavBar() {
                       setMobileMenuOpen(false);
                       signOut({ callbackUrl: "/login" });
                     }}
-                    className="w-full justify-start gap-3 text-slate-700 hover:text-red-600 hover:bg-red-50"
+                    className="w-full justify-start gap-3 text-slate-700 dark:text-slate-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
                   >
                     <LogOut className="h-4 w-4" />
                     <span>Sign Out</span>

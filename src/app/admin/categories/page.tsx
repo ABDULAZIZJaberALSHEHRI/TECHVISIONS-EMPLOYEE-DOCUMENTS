@@ -147,7 +147,7 @@ export default function CategoriesPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Categories</h1>
         <Button
           onClick={() => {
             setEditingCategory(null);
@@ -196,7 +196,7 @@ export default function CategoriesPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-red-600"
+                      className="h-7 w-7 text-red-600 dark:text-red-400"
                       onClick={() => setDeleteDialog(cat)}
                     >
                       <Trash2 className="h-3 w-3" />

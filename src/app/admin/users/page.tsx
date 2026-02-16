@@ -217,8 +217,8 @@ export default function UserManagementPage() {
           size="sm"
           className={
             u.isActive
-              ? "text-red-600 hover:bg-red-50"
-              : "text-green-600 hover:bg-green-50"
+              ? "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
+              : "text-green-600 dark:text-emerald-400 hover:bg-green-50 dark:hover:bg-emerald-900/30"
           }
           onClick={() => setToggleDialog(u)}
         >
@@ -230,7 +230,7 @@ export default function UserManagementPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h1>
       <DataTable
         columns={columns}
         data={users}

@@ -211,7 +211,7 @@ export default function RequestDetailPage() {
   if (!request)
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">{error || "Request not found"}</p>
+        <p className="text-gray-500 dark:text-slate-400">{error || "Request not found"}</p>
         <Button variant="ghost" onClick={() => router.back()} className="mt-4">
           Go Back
         </Button>
@@ -225,7 +225,7 @@ export default function RequestDetailPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {request.title}
           </h1>
           <div className="mt-2 flex items-center gap-3">
@@ -261,7 +261,7 @@ export default function RequestDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              className="text-red-600 hover:bg-red-50"
+              className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
               onClick={() => setDeleteDialogOpen(true)}
             >
               <Trash2 className="mr-1 h-4 w-4" />
@@ -390,7 +390,7 @@ export default function RequestDetailPage() {
                   key={slot.id}
                   className="flex items-center gap-3 rounded-lg border p-3"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 text-xs font-medium text-blue-700 dark:text-blue-400">
                     {index + 1}
                   </span>
                   <span className="text-sm font-medium">{slot.name}</span>

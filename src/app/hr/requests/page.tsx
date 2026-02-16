@@ -151,7 +151,7 @@ function HRRequestsContent() {
         description="Manage and track all document requests"
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExport} className="border-slate-300">
+            <Button variant="outline" onClick={handleExport} className="border-slate-300 dark:border-slate-600">
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>

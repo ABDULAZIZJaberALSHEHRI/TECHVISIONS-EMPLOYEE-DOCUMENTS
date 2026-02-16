@@ -20,7 +20,7 @@ export function SectionCard({
   return (
     <div
       className={cn(
-        "bg-white rounded-2xl shadow-md border border-slate-200 p-6",
+        "bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 p-6",
         className
       )}
       style={style}
@@ -29,10 +29,10 @@ export function SectionCard({
         <div className="flex justify-between items-start mb-6">
           <div className="flex-1">
             {title && (
-              <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h3>
             )}
             {description && (
-              <p className="text-sm text-slate-600 mt-1">{description}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{description}</p>
             )}
           </div>
           {actions && <div className="flex items-center gap-2">{actions}</div>}

@@ -43,14 +43,14 @@ export function NotificationBell() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0 shadow-xl border-gray-200" align="end">
-        <div className="flex items-center justify-between border-b px-4 py-3 bg-gray-50/50">
-          <h4 className="text-sm font-semibold text-gray-900">Notifications</h4>
+      <PopoverContent className="w-80 p-0 shadow-xl border-gray-200 dark:border-slate-700" align="end">
+        <div className="flex items-center justify-between border-b dark:border-slate-700 px-4 py-3 bg-gray-50/50 dark:bg-slate-800">
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h4>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              className="h-auto px-2 py-1 text-xs text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+              className="h-auto px-2 py-1 text-xs text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
               onClick={markAllAsRead}
             >
               <CheckCheck className="mr-1 h-3 w-3" />
@@ -60,7 +60,7 @@ export function NotificationBell() {
         </div>
         <ScrollArea className="h-[300px]">
           {notifications.length === 0 ? (
-            <div className="flex h-[200px] items-center justify-center text-sm text-gray-400">
+            <div className="flex h-[200px] items-center justify-center text-sm text-gray-400 dark:text-slate-500">
               No notifications
             </div>
           ) : (
@@ -68,24 +68,24 @@ export function NotificationBell() {
               <button
                 key={n.id}
                 className={cn(
-                  "flex w-full items-start gap-3 border-b border-gray-100 px-4 py-3 text-left transition-all duration-150 hover:bg-blue-50/50",
-                  !n.isRead && "bg-blue-50/30"
+                  "flex w-full items-start gap-3 border-b border-gray-100 dark:border-slate-700 px-4 py-3 text-left transition-all duration-150 hover:bg-blue-50/50 dark:hover:bg-blue-900/30",
+                  !n.isRead && "bg-blue-50/30 dark:bg-blue-900/20"
                 )}
                 onClick={() => handleClick(n.id, n.link)}
               >
                 <div className="flex-1 min-w-0">
                   <p
                     className={cn(
-                      "text-sm text-gray-700",
-                      !n.isRead && "font-semibold text-gray-900"
+                      "text-sm text-gray-700 dark:text-slate-300",
+                      !n.isRead && "font-semibold text-gray-900 dark:text-white"
                     )}
                   >
                     {n.title}
                   </p>
-                  <p className="text-xs text-gray-400 line-clamp-2">
+                  <p className="text-xs text-gray-400 dark:text-slate-500 line-clamp-2">
                     {n.message}
                   </p>
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">
                     {formatDistanceToNow(new Date(n.createdAt), {
                       addSuffix: true,
                     })}

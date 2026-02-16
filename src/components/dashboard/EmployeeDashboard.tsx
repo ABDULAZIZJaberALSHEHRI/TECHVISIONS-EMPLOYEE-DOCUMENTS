@@ -130,14 +130,14 @@ export function EmployeeDashboard() {
                       <PriorityBadge priority={assignment.request.priority} />
                       <StatusBadge status={assignment.status} />
                     </div>
-                    <h4 className="mb-1 font-semibold text-sm text-gray-900 line-clamp-2">
+                    <h4 className="mb-1 font-semibold text-sm text-gray-900 dark:text-white line-clamp-2">
                       {assignment.request.title}
                     </h4>
-                    <p className="mb-2 text-xs text-gray-400 line-clamp-2">
+                    <p className="mb-2 text-xs text-gray-400 dark:text-slate-500 line-clamp-2">
                       {assignment.request.description}
                     </p>
                     {assignment.request.category && (
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-400 dark:text-slate-500">
                         {assignment.request.category.name}
                       </p>
                     )}
@@ -145,8 +145,8 @@ export function EmployeeDashboard() {
                       className={cn(
                         "mt-2 text-xs font-medium",
                         assignment.status === "OVERDUE"
-                          ? "text-red-600"
-                          : "text-gray-400"
+                          ? "text-red-600 dark:text-red-400"
+                          : "text-gray-400 dark:text-slate-500"
                       )}
                     >
                       Due: {format(new Date(assignment.dueDate), "MMM dd, yyyy")}
@@ -166,13 +166,13 @@ export function EmployeeDashboard() {
         </CardHeader>
         <CardContent>
           {data.recentActivity.length === 0 ? (
-            <p className="text-sm text-gray-400">No recent activity</p>
+            <p className="text-sm text-gray-400 dark:text-slate-500">No recent activity</p>
           ) : (
             <div className="space-y-3">
               {data.recentActivity.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0 cursor-pointer hover:bg-blue-50/50 rounded-lg px-2 py-1.5 transition-all duration-150"
+                  className="flex items-center justify-between border-b border-gray-100 dark:border-slate-700 pb-2 last:border-0 cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-900/30 rounded-lg px-2 py-1.5 transition-all duration-150"
                   onClick={() =>
                     router.push(`/employee/requests/${item.request.id}`)
                   }
@@ -190,7 +190,7 @@ export function EmployeeDashboard() {
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {item.request.title}
                       </p>
                       {item.status === "REJECTED" && item.reviewNote && (

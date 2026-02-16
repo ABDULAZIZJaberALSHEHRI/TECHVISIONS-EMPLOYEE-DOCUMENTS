@@ -47,15 +47,15 @@ export default function LoginPage() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-500 text-white shadow-lg shadow-blue-500/30 animate-fade-in-down animate-fill-both">
             <FileText className="h-8 w-8" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 animate-fade-in animate-fill-both" style={{ animationDelay: "100ms" }}>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white animate-fade-in animate-fill-both" style={{ animationDelay: "100ms" }}>
             DRMS
           </h1>
-          <p className="text-sm text-gray-500 animate-fade-in animate-fill-both" style={{ animationDelay: "200ms" }}>
+          <p className="text-sm text-gray-500 dark:text-slate-400 animate-fade-in animate-fill-both" style={{ animationDelay: "200ms" }}>
             Document Request Management System
           </p>
         </CardHeader>
         <CardContent className="space-y-6 pt-4">
-          <p className="text-center text-sm text-gray-500 animate-fade-in animate-fill-both" style={{ animationDelay: "250ms" }}>
+          <p className="text-center text-sm text-gray-500 dark:text-slate-400 animate-fade-in animate-fill-both" style={{ animationDelay: "250ms" }}>
             Sign in with your company Microsoft account to access the system.
           </p>
           <div className="animate-fade-in-up animate-fill-both" style={{ animationDelay: "300ms" }}>
@@ -70,7 +70,7 @@ export default function LoginPage() {
 
           {isDev && (
             <div className="border-t pt-4 space-y-3 animate-fade-in-up animate-fill-both" style={{ animationDelay: "400ms" }}>
-              <p className="text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
+              <p className="text-center text-xs font-medium text-gray-400 dark:text-slate-500 uppercase tracking-wider">
                 Dev Quick Login
               </p>
               <div className="grid gap-2">
@@ -94,7 +94,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          <p className="text-center text-xs text-gray-400 animate-fade-in animate-fill-both" style={{ animationDelay: "600ms" }}>
+          <p className="text-center text-xs text-gray-400 dark:text-slate-500 animate-fade-in animate-fill-both" style={{ animationDelay: "600ms" }}>
             Access is restricted to authorized company members only.
           </p>
         </CardContent>

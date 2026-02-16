@@ -437,14 +437,14 @@ export function TrackingMatrix() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b bg-gray-50">
-                        <th className="sticky left-0 z-10 bg-gray-50 p-3 text-left">
+                      <tr className="border-b bg-gray-50 dark:bg-slate-800">
+                        <th className="sticky left-0 z-10 bg-gray-50 dark:bg-slate-800 p-3 text-left">
                           <Checkbox
                             checked={selectedEmployees.size === employees.length && employees.length > 0}
                             onCheckedChange={toggleAll}
                           />
                         </th>
-                        <th className="sticky left-10 z-10 bg-gray-50 p-3 text-left text-sm font-medium min-w-[200px]">
+                        <th className="sticky left-10 z-10 bg-gray-50 dark:bg-slate-800 p-3 text-left text-sm font-medium min-w-[200px]">
                           Employee
                         </th>
                         <th className="p-3 text-left text-sm font-medium min-w-[120px]">
@@ -463,14 +463,14 @@ export function TrackingMatrix() {
                     </thead>
                     <tbody>
                       {employees.map((emp) => (
-                        <tr key={emp.id} className="border-b hover:bg-gray-50/50">
-                          <td className="sticky left-0 z-10 bg-white p-3">
+                        <tr key={emp.id} className="border-b hover:bg-gray-50/50 dark:hover:bg-slate-700/50">
+                          <td className="sticky left-0 z-10 bg-white dark:bg-slate-800 p-3">
                             <Checkbox
                               checked={selectedEmployees.has(emp.id)}
                               onCheckedChange={() => toggleEmployee(emp.id)}
                             />
                           </td>
-                          <td className="sticky left-10 z-10 bg-white p-3">
+                          <td className="sticky left-10 z-10 bg-white dark:bg-slate-800 p-3">
                             <div>
                               <p className="text-sm font-medium">{emp.name}</p>
                               <p className="text-xs text-muted-foreground">{emp.email}</p>

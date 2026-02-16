@@ -16,17 +16,17 @@ export function FormContainer({
   return (
     <div
       className={cn(
-        "bg-white rounded-2xl shadow-lg border border-slate-200 p-8",
+        "bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 p-8",
         className
       )}
     >
       {(title || description) && (
         <div className="mb-8">
           {title && (
-            <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{title}</h2>
           )}
           {description && (
-            <p className="text-slate-600 mt-2">{description}</p>
+            <p className="text-slate-600 dark:text-slate-300 mt-2">{description}</p>
           )}
         </div>
       )}

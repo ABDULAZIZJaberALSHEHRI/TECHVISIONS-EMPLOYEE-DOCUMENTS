@@ -30,13 +30,13 @@ export function EmptyState({
     >
       <div className="relative mb-6">
         <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 blur-xl opacity-50" />
-        <div className="relative rounded-full bg-gradient-to-br from-slate-100 to-slate-200 p-6 shadow-lg">
-          {icon || <FileQuestion className="h-10 w-10 text-slate-400" />}
+        <div className="relative rounded-full bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600 p-6 shadow-lg">
+          {icon || <FileQuestion className="h-10 w-10 text-slate-400 dark:text-slate-500" />}
         </div>
       </div>
-      <h3 className="mb-2 text-xl font-bold text-slate-900">{title}</h3>
+      <h3 className="mb-2 text-xl font-bold text-slate-900 dark:text-white">{title}</h3>
       {description && (
-        <p className="mb-6 max-w-md text-sm text-slate-600 leading-relaxed">
+        <p className="mb-6 max-w-md text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           {description}
         </p>
       )}

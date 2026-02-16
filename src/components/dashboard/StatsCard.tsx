@@ -14,19 +14,19 @@ interface StatsCardProps {
 }
 
 const colorMap = {
-  default: "bg-white border-gray-200",
-  yellow: "bg-white border-amber-200",
-  blue: "bg-white border-blue-200",
-  red: "bg-white border-red-200",
-  green: "bg-white border-emerald-200",
+  default: "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700",
+  yellow: "bg-white dark:bg-slate-800 border-amber-200 dark:border-amber-800",
+  blue: "bg-white dark:bg-slate-800 border-blue-200 dark:border-blue-800",
+  red: "bg-white dark:bg-slate-800 border-red-200 dark:border-red-800",
+  green: "bg-white dark:bg-slate-800 border-emerald-200 dark:border-emerald-800",
 };
 
 const iconColorMap = {
-  default: "bg-gray-100 text-gray-600",
-  yellow: "bg-amber-50 text-amber-600",
-  blue: "bg-blue-50 text-blue-600",
-  red: "bg-red-50 text-red-600",
-  green: "bg-emerald-50 text-emerald-600",
+  default: "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300",
+  yellow: "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
+  blue: "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
+  red: "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400",
+  green: "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400",
 };
 
 function AnimatedNumber({ value }: { value: number }) {
@@ -80,8 +80,8 @@ export function StatsCard({
           {icon}
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="text-2xl font-bold text-gray-900 animate-count-up">
+          <p className="text-sm font-medium text-gray-500 dark:text-slate-400">{title}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white animate-count-up">
             <AnimatedNumber value={value} />
           </p>
         </div>

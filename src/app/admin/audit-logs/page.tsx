@@ -131,7 +131,7 @@ export default function AuditLogsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <h1 className="text-2xl font-bold text-gray-900">Audit Logs</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Audit Logs</h1>
 
       <div className="flex flex-wrap gap-3">
         <Select value={action} onValueChange={setAction}>

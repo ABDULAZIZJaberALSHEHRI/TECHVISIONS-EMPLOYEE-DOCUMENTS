@@ -37,7 +37,7 @@ export function LoadingSpinner({
         />
       </div>
       {text && (
-        <span className="text-sm font-medium text-slate-700">{text}</span>
+        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{text}</span>
       )}
     </div>
   );

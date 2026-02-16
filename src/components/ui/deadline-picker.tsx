@@ -60,10 +60,10 @@ export function DeadlinePicker({
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-auto p-0 border border-gray-200 shadow-lg rounded-xl"
+          className="w-auto p-0 border border-gray-200 dark:border-slate-700 shadow-lg rounded-xl"
           align="start"
         >
-          <div className="rounded-xl overflow-hidden bg-white">
+          <div className="rounded-xl overflow-hidden bg-white dark:bg-slate-800">
             <Calendar
               mode="single"
               selected={selectedDate}
@@ -75,17 +75,17 @@ export function DeadlinePicker({
                 months: "flex flex-col",
                 month: "flex flex-col gap-3",
                 nav: "absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1",
-                button_previous: "h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-800 hover:bg-gray-100 transition-colors",
-                button_next: "h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-800 hover:bg-gray-100 transition-colors",
+                button_previous: "h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 dark:text-slate-500 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors",
+                button_next: "h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 dark:text-slate-500 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors",
                 month_caption: "flex h-8 w-full items-center justify-center px-8",
-                caption_label: "text-sm font-semibold text-gray-800",
+                caption_label: "text-sm font-semibold text-gray-800 dark:text-white",
                 table: "w-full border-collapse",
                 weekdays: "flex",
-                weekday: "flex-1 text-[11px] font-medium text-gray-500 uppercase tracking-wider text-center py-2",
+                weekday: "flex-1 text-[11px] font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider text-center py-2",
                 week: "mt-1 flex w-full",
                 day: "group/day relative aspect-square h-full w-full p-0 text-center",
-                outside: "text-gray-300",
-                disabled: "text-gray-200 cursor-not-allowed",
+                outside: "text-gray-300 dark:text-slate-600",
+                disabled: "text-gray-200 dark:text-slate-600 cursor-not-allowed",
                 today: "ring-1 ring-blue-500/40 rounded-lg",
                 range_start: "",
                 range_middle: "",
@@ -109,10 +109,10 @@ export function DeadlinePicker({
                         isSelected
                           ? "bg-blue-600 text-white font-semibold shadow-md shadow-blue-600/25"
                           : isOutside
-                          ? "text-gray-300"
+                          ? "text-gray-300 dark:text-slate-600"
                           : isDisabled
-                          ? "text-gray-200 cursor-not-allowed"
-                          : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                          ? "text-gray-200 dark:text-slate-600 cursor-not-allowed"
+                          : "text-gray-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-400"
                       )}
                       {...props}
                     />
@@ -137,11 +137,11 @@ export function DeadlinePicker({
             />
 
             {/* Quick Select Buttons */}
-            <div className="flex gap-2 px-3 pb-3 border-t border-gray-100 pt-2">
+            <div className="flex gap-2 px-3 pb-3 border-t border-gray-100 dark:border-slate-700 pt-2">
               <button
                 type="button"
                 onClick={() => handleQuickSelect(0)}
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium text-gray-600 hover:text-blue-700 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 transition-colors"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium text-gray-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400 bg-gray-50 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 border border-gray-200 dark:border-slate-600 hover:border-blue-200 dark:hover:border-blue-700 transition-colors"
               >
                 <Zap className="h-3 w-3" />
                 Today
@@ -149,7 +149,7 @@ export function DeadlinePicker({
               <button
                 type="button"
                 onClick={() => handleQuickSelect(7)}
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium text-gray-600 hover:text-blue-700 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 transition-colors"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium text-gray-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400 bg-gray-50 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 border border-gray-200 dark:border-slate-600 hover:border-blue-200 dark:hover:border-blue-700 transition-colors"
               >
                 <CalendarDays className="h-3 w-3" />
                 +7 days
@@ -157,7 +157,7 @@ export function DeadlinePicker({
               <button
                 type="button"
                 onClick={() => handleQuickSelect(30)}
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium text-gray-600 hover:text-blue-700 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 transition-colors"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium text-gray-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400 bg-gray-50 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 border border-gray-200 dark:border-slate-600 hover:border-blue-200 dark:hover:border-blue-700 transition-colors"
               >
                 <CalendarDays className="h-3 w-3" />
                 +30 days

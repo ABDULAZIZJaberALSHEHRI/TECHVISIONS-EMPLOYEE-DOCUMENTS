@@ -91,7 +91,7 @@ export default function MyDocumentsPage() {
                     </span>
                   )}
                   {req.templateUrl && (
-                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600 border-blue-200">
+                    <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800">
                       <Paperclip className="mr-1 h-3 w-3" />
                       Template
                     </Badge>
@@ -111,7 +111,7 @@ export default function MyDocumentsPage() {
                         e.stopPropagation();
                         window.open(`/api/requests/${req.id}/template`, "_blank");
                       }}
-                      className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                      className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
                     >
                       <Download className="h-3 w-3" />
                       Download Template
@@ -129,7 +129,7 @@ export default function MyDocumentsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <h1 className="text-2xl font-bold text-gray-900">Requests</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Requests</h1>
 
       <Tabs defaultValue="all">
         <TabsList>

@@ -90,6 +90,18 @@ export async function PATCH(
         parsed.data.note!,
         assignment.request.id
       ).catch((err) => console.error("Notification failed:", err));
+
+      // Revert request status to OPEN if it was auto-closed
+      const parentRequest = await prisma.documentRequest.findUnique({
+        where: { id: assignment.request.id },
+        select: { status: true },
+      });
+      if (parentRequest?.status === "CLOSED") {
+        await prisma.documentRequest.update({
+          where: { id: assignment.request.id },
+          data: { status: "OPEN" },
+        });
+      }
     } else {
       notifyApproved(
         assignment.employee.id,
@@ -98,6 +110,23 @@ export async function PATCH(
         assignment.request.title,
         assignment.request.id
       ).catch((err) => console.error("Notification failed:", err));
+
+      // Auto-close request if all assignments are now submitted/approved
+      const totalAssignments = await prisma.requestAssignment.count({
+        where: { requestId: assignment.request.id },
+      });
+      const completedAssignments = await prisma.requestAssignment.count({
+        where: {
+          requestId: assignment.request.id,
+          status: { in: ["SUBMITTED", "APPROVED"] },
+        },
+      });
+      if (completedAssignments >= totalAssignments && totalAssignments > 0) {
+        await prisma.documentRequest.update({
+          where: { id: assignment.request.id },
+          data: { status: "CLOSED" },
+        });
+      }
     }
 
     await createAuditLog({

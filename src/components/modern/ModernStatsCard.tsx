@@ -27,21 +27,21 @@ const gradientMap = {
 };
 
 const iconBgMap = {
-  default: "bg-slate-100",
-  yellow: "bg-amber-50",
-  blue: "bg-blue-50",
-  red: "bg-red-50",
-  green: "bg-emerald-50",
-  purple: "bg-purple-50",
+  default: "bg-slate-100 dark:bg-slate-700",
+  yellow: "bg-amber-50 dark:bg-amber-900/30",
+  blue: "bg-blue-50 dark:bg-blue-900/30",
+  red: "bg-red-50 dark:bg-red-900/30",
+  green: "bg-emerald-50 dark:bg-emerald-900/30",
+  purple: "bg-purple-50 dark:bg-purple-900/30",
 };
 
 const iconColorMap = {
-  default: "text-slate-600",
-  yellow: "text-amber-600",
-  blue: "text-blue-600",
-  red: "text-red-600",
-  green: "text-emerald-600",
-  purple: "text-purple-600",
+  default: "text-slate-600 dark:text-slate-300",
+  yellow: "text-amber-600 dark:text-amber-400",
+  blue: "text-blue-600 dark:text-blue-400",
+  red: "text-red-600 dark:text-red-400",
+  green: "text-emerald-600 dark:text-emerald-400",
+  purple: "text-purple-600 dark:text-purple-400",
 };
 
 function AnimatedNumber({ value }: { value: number }) {
@@ -93,13 +93,13 @@ export function ModernStatsCard({
             gradientMap[color]
           )}
         />
-        <div className="relative bg-white rounded-2xl shadow-xl p-6 transition-all duration-300 group-hover:shadow-2xl group-hover:-translate-y-1">
+        <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 transition-all duration-300 group-hover:shadow-2xl group-hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-sm font-medium text-slate-600 mb-1">
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
                 {title}
               </p>
-              <p className="text-3xl font-bold text-slate-900">
+              <p className="text-3xl font-bold text-slate-900 dark:text-white">
                 <AnimatedNumber value={value} />
               </p>
               {trend && (
@@ -107,12 +107,12 @@ export function ModernStatsCard({
                   <span
                     className={cn(
                       "text-xs font-medium",
-                      trend.isPositive ? "text-emerald-600" : "text-red-600"
+                      trend.isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
                     )}
                   >
                     {trend.isPositive ? "↑" : "↓"} {Math.abs(trend.value)}%
                   </span>
-                  <span className="text-xs text-slate-500">vs last month</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">vs last month</span>
                 </div>
               )}
             </div>
@@ -133,13 +133,13 @@ export function ModernStatsCard({
 
   return (
     <div
-      className="bg-white rounded-2xl shadow-md border border-slate-200 p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 animate-fade-in-up animate-fill-both"
+      className="bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 animate-fade-in-up animate-fill-both"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-slate-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-slate-900">
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">{title}</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-white">
             <AnimatedNumber value={value} />
           </p>
           {trend && (
@@ -147,12 +147,12 @@ export function ModernStatsCard({
               <span
                 className={cn(
                   "text-xs font-medium",
-                  trend.isPositive ? "text-emerald-600" : "text-red-600"
+                  trend.isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
                 )}
               >
                 {trend.isPositive ? "↑" : "↓"} {Math.abs(trend.value)}%
               </span>
-              <span className="text-xs text-slate-500">vs last month</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">vs last month</span>
             </div>
           )}
         </div>

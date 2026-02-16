@@ -174,7 +174,7 @@ export default function DeptHeadRequestDetailPage() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{request.title}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{request.title}</h1>
           <div className="mt-2 flex items-center gap-3">
             <PriorityBadge priority={request.priority} />
             <Badge variant="secondary" className={statusConfig.color}>
@@ -213,7 +213,7 @@ export default function DeptHeadRequestDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              className="text-red-600 hover:bg-red-50"
+              className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
               onClick={() => setDeleteDialogOpen(true)}
             >
               <Trash2 className="mr-1 h-4 w-4" />
@@ -261,7 +261,7 @@ export default function DeptHeadRequestDetailPage() {
                 <Paperclip className="h-4 w-4 text-blue-500" />
                 <a
                   href={`/api/requests/${request.id}/template`}
-                  className="text-blue-600 hover:underline"
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   {request.templateName}
                 </a>
@@ -332,7 +332,7 @@ export default function DeptHeadRequestDetailPage() {
                   key={slot.id}
                   className="flex items-center gap-3 rounded-lg border p-3"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 text-xs font-medium text-blue-700 dark:text-blue-400">
                     {index + 1}
                   </span>
                   <span className="text-sm font-medium">{slot.name}</span>

@@ -83,7 +83,7 @@ export default function EmployeeDetailPage() {
 
   return (
     <div className="animate-fade-in">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">
+      <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
         Employee Profile
       </h1>
       <EmployeeProfile user={user} assignments={assignments} />

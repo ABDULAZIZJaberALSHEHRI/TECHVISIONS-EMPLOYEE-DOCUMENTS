@@ -26,7 +26,7 @@ export function GradientCard({
         onClick={onClick}
       >
         <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl opacity-0 group-hover:opacity-100 blur transition duration-500" />
-        <div className="relative bg-white rounded-2xl shadow-lg p-6 transition-all duration-300 group-hover:shadow-xl">
+        <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 transition-all duration-300 group-hover:shadow-xl">
           {children}
         </div>
       </div>
@@ -44,7 +44,7 @@ export function GradientCard({
         onClick={onClick}
       >
         <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-600 rounded-2xl opacity-20 blur-lg group-hover:opacity-40 transition duration-500" />
-        <div className="relative bg-white rounded-2xl shadow-md border border-slate-200 p-6 transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-0.5">
+        <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 p-6 transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-0.5">
           {children}
         </div>
       </div>
@@ -54,7 +54,7 @@ export function GradientCard({
   return (
     <div
       className={cn(
-        "bg-white rounded-2xl shadow-md border border-slate-200 p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5",
+        "bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5",
         onClick && "cursor-pointer",
         className
       )}

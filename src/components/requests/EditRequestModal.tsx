@@ -369,13 +369,13 @@ export function EditRequestModal({
 
           {/* Submission Warning */}
           {submissionCount > 0 && (
-            <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-700 p-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-amber-800">
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
                   This request has {submissionCount} submission(s).
                 </p>
-                <p className="text-xs text-amber-600 mt-1">
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
                   Editing may affect existing submissions. Removing employees will delete their submissions.
                 </p>
               </div>
@@ -475,7 +475,7 @@ export function EditRequestModal({
             <div>
               <Label>Template File</Label>
               {keepTemplate && request.templateName && !newTemplateFile ? (
-                <div className="mt-1 flex items-center gap-2 rounded-lg border bg-blue-50 p-3">
+                <div className="mt-1 flex items-center gap-2 rounded-lg border bg-blue-50 dark:bg-blue-900/30 p-3">
                   <FileText className="h-5 w-5 text-blue-500" />
                   <span className="text-sm font-medium flex-1 truncate">
                     {request.templateName}
@@ -490,7 +490,7 @@ export function EditRequestModal({
                   </Button>
                 </div>
               ) : newTemplateFile ? (
-                <div className="mt-1 flex items-center gap-2 rounded-lg border bg-green-50 p-3">
+                <div className="mt-1 flex items-center gap-2 rounded-lg border bg-green-50 dark:bg-emerald-900/30 p-3">
                   <FileText className="h-5 w-5 text-green-500" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{newTemplateFile.name}</p>
@@ -512,7 +512,7 @@ export function EditRequestModal({
                 </div>
               ) : (
                 <div className="mt-1">
-                  <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed p-4 text-sm text-muted-foreground hover:border-blue-400 hover:bg-blue-50/50 transition-colors">
+                  <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed p-4 text-sm text-muted-foreground hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors">
                     <Upload className="h-5 w-5" />
                     <span>Upload a template file (PDF, DOCX, XLSX, up to 10MB)</span>
                     <input
@@ -536,7 +536,7 @@ export function EditRequestModal({
                       key={att.id}
                       className="flex items-center gap-2 rounded-lg border p-2"
                     >
-                      <FileText className="h-4 w-4 text-gray-500" />
+                      <FileText className="h-4 w-4 text-gray-500 dark:text-slate-400" />
                       <span className="text-sm flex-1 truncate">{att.fileName}</span>
                       <Button
                         type="button"
@@ -582,7 +582,7 @@ export function EditRequestModal({
               <div className="space-y-2">
                 {documentSlots.map((slot, index) => (
                   <div key={index} className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 text-xs font-medium text-blue-700 dark:text-blue-400">
                       {index + 1}
                     </span>
                     <Input
@@ -702,7 +702,7 @@ export function EditRequestModal({
                 <div className="space-y-3">
                   <Label>Select Departments</Label>
                   {isDeptHead && managedDept ? (
-                    <div className="rounded-lg border bg-blue-50 p-3">
+                    <div className="rounded-lg border bg-blue-50 dark:bg-blue-900/30 p-3">
                       <Badge>{managedDept}</Badge>
                       <p className="mt-1 text-xs text-muted-foreground">
                         As Department Head, requests are for your department only.
@@ -732,11 +732,11 @@ export function EditRequestModal({
               )}
 
               {activeTab === "ALL_EMPLOYEES" && (
-                <div className="rounded-lg border bg-amber-50 p-3">
-                  <p className="text-sm font-medium text-amber-800">
+                <div className="rounded-lg border bg-amber-50 dark:bg-amber-900/30 p-3">
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
                     This request will be assigned to all active employees.
                   </p>
-                  <p className="mt-1 text-xs text-amber-600">
+                  <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
                     {employeeCount !== null && `${employeeCount} employees will be assigned.`}
                   </p>
                 </div>

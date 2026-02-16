@@ -165,7 +165,7 @@ export function HRDashboard() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex h-[250px] items-center justify-center text-slate-400">
+              <div className="flex h-[250px] items-center justify-center text-slate-400 dark:text-slate-500">
                 No data yet
               </div>
             )}
@@ -201,7 +201,7 @@ export function HRDashboard() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex h-[250px] items-center justify-center text-slate-400">
+              <div className="flex h-[250px] items-center justify-center text-slate-400 dark:text-slate-500">
                 No workload data yet
               </div>
             )}
@@ -235,16 +235,16 @@ export function HRDashboard() {
         >
           <div className="space-y-3">
             {data.recentActivity.length === 0 ? (
-              <p className="text-sm text-slate-400">No recent activity</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">No recent activity</p>
             ) : (
               data.recentActivity.map((activity) => (
                 <div
                   key={activity.id}
-                  className="flex items-start justify-between border-b border-slate-100 pb-2 last:border-0 transition-all duration-200 hover:bg-slate-50 rounded-lg px-3 py-2 -mx-3"
+                  className="flex items-start justify-between border-b border-slate-100 dark:border-slate-700 pb-2 last:border-0 transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg px-3 py-2 -mx-3"
                 >
                   <div>
-                    <p className="text-sm text-slate-700">
-                      <span className="font-semibold text-slate-900">
+                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                      <span className="font-semibold text-slate-900 dark:text-white">
                         {activity.user?.name || "System"}
                       </span>{" "}
                       {activity.action.toLowerCase().replace(/_/g, " ")}
@@ -252,12 +252,12 @@ export function HRDashboard() {
                     {activity.details &&
                       typeof activity.details === "object" &&
                       "requestTitle" in activity.details && (
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                           {String(activity.details.requestTitle)}
                         </p>
                       )}
                   </div>
-                  <span className="text-xs text-slate-500 whitespace-nowrap">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
                     {formatDistanceToNow(new Date(activity.createdAt), {
                       addSuffix: true,
                     })}
@@ -276,19 +276,19 @@ export function HRDashboard() {
         >
           <div className="space-y-3">
             {data.upcomingDeadlines.length === 0 ? (
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-slate-400 dark:text-slate-500">
                 No upcoming deadlines in the next 7 days
               </p>
             ) : (
               data.upcomingDeadlines.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between border-b border-slate-100 pb-2 last:border-0 cursor-pointer hover:bg-blue-50 rounded-lg px-3 py-2 -mx-3 transition-all duration-200"
+                  className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-2 last:border-0 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg px-3 py-2 -mx-3 transition-all duration-200"
                   onClick={() => router.push(`/hr/requests/${item.id}`)}
                 >
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">{item.title}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Due: {format(new Date(item.deadline), "MMM dd, yyyy")}
                     </p>
                   </div>
@@ -326,14 +326,14 @@ export function HRDashboard() {
           <Button
             variant="outline"
             onClick={() => router.push("/hr/assignments")}
-            className="border-slate-300 hover:bg-slate-50"
+            className="border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700"
           >
             <Inbox className="mr-2 h-4 w-4" />
             Incoming Tasks
           </Button>
           <Button
             variant="outline"
-            className="border-red-300 text-red-600 hover:bg-red-50"
+            className="border-red-300 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
             onClick={() => router.push("/hr/requests?status=OVERDUE")}
           >
             <AlertTriangle className="mr-2 h-4 w-4" />
@@ -342,7 +342,7 @@ export function HRDashboard() {
           <Button
             variant="outline"
             onClick={() => router.push("/hr/employees")}
-            className="border-slate-300 hover:bg-slate-50"
+            className="border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700"
           >
             <Users className="mr-2 h-4 w-4" />
             View All Employees

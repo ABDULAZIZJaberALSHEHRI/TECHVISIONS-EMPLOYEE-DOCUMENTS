@@ -140,6 +140,25 @@ export async function POST(
       data: { status: "SUBMITTED" },
     });
 
+    // Auto-close request if all assignments are now submitted/approved
+    if (assignment.request.status === "OPEN" || assignment.request.status === "PENDING_HR") {
+      const totalAssignments = await prisma.requestAssignment.count({
+        where: { requestId: assignment.requestId },
+      });
+      const completedAssignments = await prisma.requestAssignment.count({
+        where: {
+          requestId: assignment.requestId,
+          status: { in: ["SUBMITTED", "APPROVED"] },
+        },
+      });
+      if (completedAssignments >= totalAssignments && totalAssignments > 0) {
+        await prisma.documentRequest.update({
+          where: { id: assignment.requestId },
+          data: { status: "CLOSED" },
+        });
+      }
+    }
+
     // Notify only the request creator and HR processor (not all HR users)
     const notifyUserIds = new Set<string>();
     if (assignment.request.createdById) notifyUserIds.add(assignment.request.createdById);

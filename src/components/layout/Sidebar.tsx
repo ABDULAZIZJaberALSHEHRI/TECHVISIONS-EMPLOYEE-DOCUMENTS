@@ -153,14 +153,14 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[280px] flex-col border-r bg-white lg:flex">
-      <div className="flex h-16 items-center gap-3 border-b px-6">
+    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[280px] flex-col border-r dark:border-slate-700 bg-white dark:bg-slate-800 lg:flex">
+      <div className="flex h-16 items-center gap-3 border-b dark:border-slate-700 px-6">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500 text-white font-bold text-sm shadow-sm shadow-blue-500/30 transition-transform duration-300 hover:scale-110">
           D
         </div>
         <div>
-          <h1 className="text-lg font-bold text-gray-900">DRMS</h1>
-          <p className="text-xs text-gray-400">Document Management</p>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">DRMS</h1>
+          <p className="text-xs text-gray-400 dark:text-slate-500">Document Management</p>
         </div>
       </div>
 
@@ -176,7 +176,7 @@ export function Sidebar() {
                 "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                 isActive
                   ? "bg-blue-500 text-white shadow-sm shadow-blue-500/25"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  : "text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-white"
               )}
               style={{ animationDelay: `${index * 50}ms` }}
             >
@@ -202,11 +202,11 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t p-4">
+      <div className="border-t dark:border-slate-700 p-4">
         <Separator className="mb-4" />
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-red-50 hover:text-red-600"
+          className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 dark:text-slate-300 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400"
         >
           <LogOut className="h-5 w-5 transition-transform duration-200 group-hover:-translate-x-0.5" />
           Sign Out

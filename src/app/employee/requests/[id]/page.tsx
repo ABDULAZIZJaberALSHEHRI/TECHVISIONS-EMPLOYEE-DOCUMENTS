@@ -103,7 +103,7 @@ export default function EmployeeRequestDetailPage() {
   if (!request)
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">{error || "Request not found"}</p>
+        <p className="text-gray-500 dark:text-slate-400">{error || "Request not found"}</p>
         <Button variant="ghost" onClick={() => router.back()} className="mt-4">
           Go Back
         </Button>
@@ -122,7 +122,7 @@ export default function EmployeeRequestDetailPage() {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">{request.title}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{request.title}</h1>
         <div className="mt-2 flex items-center gap-3">
           <PriorityBadge priority={request.priority} />
           <Badge
@@ -246,11 +246,11 @@ export default function EmployeeRequestDetailPage() {
           </CardHeader>
           <CardContent>
             {assignment.status === "REJECTED" && assignment.reviewNote && (
-              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3">
-                <p className="text-sm font-medium text-red-700">
+              <div className="mb-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-3">
+                <p className="text-sm font-medium text-red-700 dark:text-red-400">
                   Previous submission was rejected:
                 </p>
-                <p className="text-sm text-red-600">{assignment.reviewNote}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{assignment.reviewNote}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Please re-upload with the requested changes.
                 </p>

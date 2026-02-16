@@ -80,7 +80,12 @@
       "Bash(wc:*)",
       "Bash(npx next build:*)",
       "Bash(grep:*)",
-      "Bash(npx pm2 restart:*)"
+      "Bash(npx pm2 restart:*)",
+      "Bash(npm ls:*)",
+      "Bash(kill:*)",
+      "Bash(npm run start:*)",
+      "Bash(lsof:*)",
+      "Bash(ss:*)"
     ]
   }
 }

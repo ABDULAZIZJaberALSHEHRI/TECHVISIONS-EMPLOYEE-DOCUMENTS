@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { BackgroundWrapper } from "@/components/ui/background-wrapper";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "DRMS - Document Request Management System",
@@ -13,9 +14,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="text-gray-900">
-        <BackgroundWrapper>{children}</BackgroundWrapper>
+    <html lang="en" suppressHydrationWarning>
+      <body className="text-foreground">
+        <ThemeProvider>
+          <BackgroundWrapper>{children}</BackgroundWrapper>
+        </ThemeProvider>
       </body>
     </html>
   );

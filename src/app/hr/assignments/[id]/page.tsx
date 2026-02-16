@@ -120,7 +120,7 @@ export default function HRAssignmentDetailPage() {
   if (!request)
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">{error || "Request not found"}</p>
+        <p className="text-gray-500 dark:text-slate-400">{error || "Request not found"}</p>
       </div>
     );
 
@@ -130,7 +130,7 @@ export default function HRAssignmentDetailPage() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{request.title}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{request.title}</h1>
           <div className="mt-2 flex items-center gap-3">
             <PriorityBadge priority={request.priority} />
             <Badge variant="secondary" className={statusConfig.color}>
@@ -198,7 +198,7 @@ export default function HRAssignmentDetailPage() {
                   key={slot.id}
                   className="flex items-center gap-3 rounded-lg border p-3"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 text-xs font-medium text-blue-700 dark:text-blue-400">
                     {index + 1}
                   </span>
                   <span className="text-sm font-medium">{slot.name}</span>

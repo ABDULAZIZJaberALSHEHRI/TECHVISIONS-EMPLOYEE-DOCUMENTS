@@ -202,14 +202,14 @@ export function MultiSlotFileUpload({
         return (
           <div
             key={slot.id}
-            className="rounded-lg border-2 border-gray-200 p-4 transition-all hover:border-gray-300"
+            className="rounded-lg border-2 border-gray-200 dark:border-slate-700 p-4 transition-all hover:border-gray-300 dark:hover:border-slate-600"
           >
             {/* Slot Header */}
             <div className="mb-3 flex items-center gap-3">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 text-sm font-semibold text-blue-700 dark:text-blue-400">
                 {index + 1}
               </span>
-              <h4 className="text-sm font-semibold text-gray-900">{slot.name}</h4>
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{slot.name}</h4>
               {slotFile?.uploaded && (
                 <CheckCircle2 className="h-5 w-5 text-green-600 ml-auto" />
               )}
@@ -222,10 +222,10 @@ export function MultiSlotFileUpload({
                   className={cn(
                     "flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors cursor-pointer",
                     dragOverSlot === slot.id
-                      ? "border-blue-500 bg-blue-50"
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30"
                       : slotFile
-                      ? "border-green-500 bg-green-50"
-                      : "border-gray-300 hover:border-gray-400"
+                      ? "border-green-500 bg-green-50 dark:bg-emerald-900/30"
+                      : "border-gray-300 dark:border-slate-600 hover:border-gray-400 dark:hover:border-slate-500"
                   )}
                   onDragOver={(e) => {
                     e.preventDefault();
@@ -286,7 +286,7 @@ export function MultiSlotFileUpload({
 
                 {/* Progress Bar */}
                 {slotFile?.uploading && (
-                  <div className="mt-3 w-full rounded-full bg-gray-200">
+                  <div className="mt-3 w-full rounded-full bg-gray-200 dark:bg-slate-700">
                     <div
                       className="h-2 rounded-full bg-blue-500 transition-all"
                       style={{ width: `${slotFile.progress}%` }}
@@ -312,13 +312,13 @@ export function MultiSlotFileUpload({
                 )}
               </>
             ) : (
-              <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3">
+              <div className="flex items-center gap-3 rounded-lg border border-green-200 dark:border-emerald-700 bg-green-50 dark:bg-emerald-900/30 p-3">
                 <CheckCircle2 className="h-6 w-6 text-green-600" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-green-900">
+                  <p className="text-sm font-medium text-green-900 dark:text-emerald-400">
                     {slotFile.file.name}
                   </p>
-                  <p className="text-xs text-green-700">
+                  <p className="text-xs text-green-700 dark:text-emerald-400">
                     Uploaded successfully · {formatBytes(slotFile.file.size)}
                   </p>
                 </div>
@@ -352,7 +352,7 @@ export function MultiSlotFileUpload({
 
       {/* Validation Message */}
       {!allSlotsHaveFiles && (
-        <p className="text-sm text-amber-600 text-center">
+        <p className="text-sm text-amber-600 dark:text-amber-400 text-center">
           Please attach a file to all {documentSlots.length} required document slots
         </p>
       )}

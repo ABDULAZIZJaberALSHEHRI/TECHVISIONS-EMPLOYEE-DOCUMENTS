@@ -56,7 +56,7 @@ export default function DeptHeadDashboardPage() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Department Dashboard
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -151,17 +151,17 @@ export default function DeptHeadDashboardPage() {
           </CardHeader>
           <CardContent>
             {summary && summary.overdue > 0 ? (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                <p className="font-medium text-red-700">
+              <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-4">
+                <p className="font-medium text-red-700 dark:text-red-400">
                   {summary.overdue} overdue assignment{summary.overdue !== 1 ? "s" : ""}
                 </p>
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                   Some employees have missed their submission deadlines.
                 </p>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mt-3 border-red-300 text-red-700 hover:bg-red-100"
+                  className="mt-3 border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30"
                   asChild
                 >
                   <Link href="/dept-head/tracking?status=OVERDUE">
@@ -170,9 +170,9 @@ export default function DeptHeadDashboardPage() {
                 </Button>
               </div>
             ) : (
-              <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-                <p className="font-medium text-green-700">All caught up!</p>
-                <p className="mt-1 text-sm text-green-600">
+              <div className="rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-emerald-900/30 p-4">
+                <p className="font-medium text-green-700 dark:text-emerald-400">All caught up!</p>
+                <p className="mt-1 text-sm text-green-600 dark:text-emerald-400">
                   No overdue assignments in your department.
                 </p>
               </div>

@@ -107,7 +107,7 @@ export function BlobCard({
 
       {/* Frosted Glass Content */}
       <div
-        className="blob-content relative z-10 bg-white/95 backdrop-blur-[24px] rounded-xl overflow-hidden flex flex-col justify-between p-4 m-[5px]"
+        className="blob-content relative z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-[24px] rounded-xl overflow-hidden flex flex-col justify-between p-4 m-[5px]"
         style={{ outline: "2px solid white" }}
       >
         {/* Header */}
@@ -137,7 +137,7 @@ export function BlobCard({
                   e.stopPropagation();
                   onDelete(id);
                 }}
-                className="p-1 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                className="p-1 rounded-md text-gray-400 dark:text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                 title="Delete Request"
                 aria-label="Delete request"
               >
@@ -157,7 +157,7 @@ export function BlobCard({
           {/* Category chip */}
           {categoryName && (
             <div className="mb-2">
-              <span className="inline-flex items-center gap-1 text-[11px] text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md font-medium">
+              <span className="inline-flex items-center gap-1 text-[11px] text-gray-600 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-md font-medium">
                 <FolderOpen className="h-3 w-3" />
                 {categoryName}
               </span>
@@ -167,11 +167,11 @@ export function BlobCard({
           {/* Submission Progress */}
           {!isCancelled && assignmentCount > 0 && (
             <div className="mb-2">
-              <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
+              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mb-1">
                 <span>Submissions</span>
                 <span className="font-medium">{submittedCount}/{assignmentCount}</span>
               </div>
-              <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-300"
                   style={{
@@ -198,7 +198,7 @@ export function BlobCard({
             <Calendar className="h-3.5 w-3.5" />
             <span>{format(new Date(deadline), "MMM dd, yyyy")}</span>
           </div>
-          <div className="flex items-center gap-1 text-slate-600 font-medium text-[13px]">
+          <div className="flex items-center gap-1 text-slate-600 dark:text-slate-300 font-medium text-[13px]">
             <Users className="h-4 w-4" />
             <span>{assignmentCount} assigned</span>
           </div>

@@ -75,7 +75,7 @@ export function ViewSubmissionModal({
     if (mimeType.startsWith("image/")) {
       return <ImageIcon className="h-6 w-6 text-blue-500" />;
     }
-    return <FileText className="h-6 w-6 text-gray-500" />;
+    return <FileText className="h-6 w-6 text-gray-500 dark:text-slate-400" />;
   };
 
   const canPreviewInline = (mimeType: string) => {
@@ -96,7 +96,7 @@ export function ViewSubmissionModal({
             {documents.map((doc) => (
               <div
                 key={doc.id}
-                className="rounded-lg border border-gray-200 p-4 hover:border-gray-300 transition-colors"
+                className="rounded-lg border border-gray-200 dark:border-slate-700 p-4 hover:border-gray-300 dark:hover:border-slate-600 transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
                   {/* File Info */}
@@ -124,7 +124,7 @@ export function ViewSubmissionModal({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-blue-600 hover:text-blue-700"
+                      className="h-8 w-8 text-blue-600 dark:text-blue-400 hover:text-blue-700"
                       disabled={downloading[`doc-${doc.id}`]}
                       onClick={() =>
                         handleDownload(
@@ -145,7 +145,7 @@ export function ViewSubmissionModal({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-blue-600 hover:text-blue-700"
+                        className="h-8 w-8 text-blue-600 dark:text-blue-400 hover:text-blue-700"
                         onClick={() => setPreviewDoc(doc)}
                         title="Preview file"
                       >
@@ -161,7 +161,7 @@ export function ViewSubmissionModal({
                     <img
                       src={`/api/documents/${doc.id}/download?preview=true`}
                       alt={doc.fileName}
-                      className="max-h-48 rounded-lg border border-gray-200 object-contain w-full bg-gray-50"
+                      className="max-h-48 rounded-lg border border-gray-200 dark:border-slate-700 object-contain w-full bg-gray-50 dark:bg-slate-700"
                     />
                   </div>
                 )}
@@ -212,7 +212,7 @@ export function ViewSubmissionModal({
                   title={previewDoc.fileName}
                 />
               ) : previewDoc.mimeType.startsWith("image/") ? (
-                <div className="flex items-center justify-center bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center justify-center bg-gray-50 dark:bg-slate-700 rounded-lg p-4">
                   <img
                     src={`/api/documents/${previewDoc.id}/download?preview=true`}
                     alt={previewDoc.fileName}
