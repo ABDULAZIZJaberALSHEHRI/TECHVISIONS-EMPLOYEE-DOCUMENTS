@@ -1,19 +1,20 @@
 import nodemailer from "nodemailer";
 import { APP_NAME, APP_URL } from "@/lib/constants";
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.office365.com",
-  port: parseInt(process.env.SMTP_PORT || "587"),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  tls: {
-    ciphers: "SSLv3",
-    rejectUnauthorized: false,
-  },
-});
+function createTransporter() {
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: parseInt(process.env.SMTP_PORT || "587"),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
+  });
+}
 
 function getBaseTemplate(content: string): string {
   const companyName = APP_NAME;
@@ -54,6 +55,7 @@ export async function sendEmail(
       return false;
     }
 
+    const transporter = createTransporter();
     await transporter.sendMail({
       from: process.env.SMTP_FROM || `${APP_NAME} <noreply@company.com>`,
       to,

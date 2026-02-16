@@ -204,13 +204,16 @@ export async function notifyReminder(
     link: `/employee/requests/${requestId}`,
   });
 
-  sendReminderEmail(
+  const sent = await sendReminderEmail(
     employeeEmail,
     employeeName,
     requestTitle,
     deadlineStr,
     requestId
-  ).catch((err) => console.error("Email send failed:", err));
+  );
+  if (!sent) {
+    console.error(`Reminder email failed for ${employeeEmail} (request: ${requestId})`);
+  }
 }
 
 export async function notifyHROverdue(

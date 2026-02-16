@@ -85,7 +85,9 @@
       "Bash(kill:*)",
       "Bash(npm run start:*)",
       "Bash(lsof:*)",
-      "Bash(ss:*)"
+      "Bash(ss:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(npx tsx:*)"
     ]
   }
 }
