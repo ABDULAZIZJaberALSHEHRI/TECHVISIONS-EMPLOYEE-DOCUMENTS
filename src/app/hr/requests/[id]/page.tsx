@@ -55,7 +55,7 @@ interface RequestDetail {
   templateName: string | null;
   createdAt: string;
   category: { id: string; name: string } | null;
-  createdBy: { id: string; name: string; email: string };
+  createdBy: { id: string; name: string; email: string; department: string | null };
   assignedTo: { id: string; name: string; email: string } | null;
   documentSlots?: DocumentSlot[];
   attachments: {
@@ -310,7 +310,7 @@ export default function RequestDetailPage() {
               <span>Max size: {request.maxFileSizeMb}MB</span>
             </div>
             <div className="text-muted-foreground">
-              Created by {request.createdBy.name} on{" "}
+              Created by {request.createdBy.name}{request.createdBy.department ? ` (${request.createdBy.department})` : ""} on{" "}
               {format(new Date(request.createdAt), "MMM dd, yyyy")}
             </div>
             {request.assignedTo && (

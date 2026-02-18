@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { getInitials } from "@/lib/utils";
 import { format } from "date-fns";
 import { Mail, Building, Briefcase, Calendar } from "lucide-react";
+import { getRoleDisplay } from "@/lib/role-display";
 import type { AssignmentStatus, Priority } from "@prisma/client";
 
 interface EmployeeProfileProps {
@@ -52,7 +53,7 @@ export function EmployeeProfile({ user, assignments }: EmployeeProfileProps) {
           <div className="flex-1">
             <div className="flex items-center gap-3">
               <h2 className="text-xl font-bold">{user.name}</h2>
-              <Badge variant="secondary">{user.role}</Badge>
+              <Badge variant="secondary">{getRoleDisplay(user)}</Badge>
               <Badge
                 variant="secondary"
                 className={

@@ -1,6 +1,9 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
+// Public API routes that bypass auth (needed before login)
+const PUBLIC_API_ROUTES = ["/api/settings/branding"];
+
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
@@ -38,7 +41,13 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: ({ token }) => !!token,
+      authorized: ({ token, req }) => {
+        // Allow public API routes without auth
+        if (PUBLIC_API_ROUTES.some((route) => req.nextUrl.pathname.startsWith(route))) {
+          return true;
+        }
+        return !!token;
+      },
     },
     pages: {
       signIn: "/login",

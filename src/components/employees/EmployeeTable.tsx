@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DataTable, Column } from "@/components/shared/DataTable";
 import { getInitials } from "@/lib/utils";
 import { format } from "date-fns";
+import { getRoleDisplay } from "@/lib/role-display";
 
 interface Employee {
   id: string;
@@ -82,7 +83,7 @@ export function EmployeeTable({
       header: "Role",
       render: (emp) => (
         <Badge variant="secondary" className="text-xs">
-          {emp.role}
+          {getRoleDisplay(emp)}
         </Badge>
       ),
     },

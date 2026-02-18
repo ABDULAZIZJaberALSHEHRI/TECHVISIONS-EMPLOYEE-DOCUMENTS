@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import { Separator } from "@/components/ui/separator";
+import { useBranding } from "@/hooks/use-branding";
 
 interface NavItem {
   label: string;
@@ -34,6 +35,7 @@ export function ModernSidebar() {
   const pathname = usePathname();
   const role = session?.user?.role;
   const [incomingCount, setIncomingCount] = useState(0);
+  const { appName, appSubtitle, logoUrl } = useBranding();
 
   // Fetch pending assigned count for HR badge (PRESERVED LOGIC)
   useEffect(() => {
@@ -158,12 +160,16 @@ export function ModernSidebar() {
     <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[280px] flex-col border-r border-slate-800/50 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 lg:flex">
       {/* Modern Logo Area with Gradient */}
       <div className="relative flex h-16 items-center gap-3 border-b border-slate-700/50 px-6 bg-gradient-to-r from-slate-800/50 to-transparent">
-        <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-bold text-lg shadow-lg shadow-blue-500/30 transition-all duration-300 hover:scale-110 hover:shadow-blue-500/50">
-          <Sparkles className="h-5 w-5" />
+        <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-bold text-lg shadow-lg shadow-blue-500/30 transition-all duration-300 hover:scale-110 hover:shadow-blue-500/50 overflow-hidden">
+          {logoUrl ? (
+            <img src={logoUrl} alt={appName} className="h-6 w-6 object-contain" />
+          ) : (
+            <Sparkles className="h-5 w-5" />
+          )}
         </div>
         <div>
-          <h1 className="text-lg font-bold text-white">DRMS</h1>
-          <p className="text-xs text-slate-400">Document Management</p>
+          <h1 className="text-lg font-bold text-white">{appName}</h1>
+          <p className="text-xs text-slate-400">{appSubtitle}</p>
         </div>
       </div>
 

@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { FileText, Shield, UserCog, Users, User } from "lucide-react";
+import { useBranding } from "@/hooks/use-branding";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -18,6 +19,7 @@ const devAccounts = [
 export default function LoginPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { appName, appSubtitle, logoUrl, loginSideImage, primaryColor, loading: brandingLoading } = useBranding();
 
   useEffect(() => {
     if (session) {
@@ -25,7 +27,7 @@ export default function LoginPage() {
     }
   }, [session, router]);
 
-  if (status === "loading") {
+  if (status === "loading" || brandingLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full" />
@@ -34,24 +36,67 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-blue-500/5 blur-3xl" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+      {/* Full-page background image layer */}
+      {loginSideImage && (
+        <div className="absolute inset-0 z-0">
+          <img
+            src={loginSideImage}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover scale-110 opacity-25 blur-[2px]"
+          />
+          {/* Radial vignette: darkens edges, lighter center where card sits */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: "radial-gradient(ellipse at center, transparent 0%, rgba(15,23,42,0.4) 70%, rgba(15,23,42,0.7) 100%)",
+            }}
+          />
+          {/* Soft brand color wash */}
+          <div
+            className="absolute inset-0 mix-blend-soft-light"
+            style={{ backgroundColor: `${primaryColor}20` }}
+          />
+        </div>
+      )}
+
+      {/* Decorative color orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-[1]">
+        <div
+          className="absolute -top-40 -right-40 h-80 w-80 rounded-full blur-3xl"
+          style={{ backgroundColor: `${primaryColor}15` }}
+        />
+        <div
+          className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full blur-3xl"
+          style={{ backgroundColor: `${primaryColor}15` }}
+        />
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full blur-3xl"
+          style={{ backgroundColor: `${primaryColor}08` }}
+        />
       </div>
 
-      <Card className="relative w-full max-w-md shadow-2xl border-0 animate-scale-in">
+      {/* Login Card */}
+      <Card className={`relative z-10 w-full max-w-md shadow-2xl border-0 animate-scale-in ${loginSideImage ? "bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm" : ""}`}>
         <CardHeader className="text-center pb-2">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-500 text-white shadow-lg shadow-blue-500/30 animate-fade-in-down animate-fill-both">
-            <FileText className="h-8 w-8" />
+          <div
+            className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-lg animate-fade-in-down animate-fill-both overflow-hidden"
+            style={{
+              backgroundColor: primaryColor,
+              boxShadow: `0 10px 15px -3px ${primaryColor}4D`,
+            }}
+          >
+            {logoUrl ? (
+              <img src={logoUrl} alt={appName} className="h-10 w-10 object-contain" />
+            ) : (
+              <FileText className="h-8 w-8" />
+            )}
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white animate-fade-in animate-fill-both" style={{ animationDelay: "100ms" }}>
-            DRMS
+            {appName}
           </h1>
           <p className="text-sm text-gray-500 dark:text-slate-400 animate-fade-in animate-fill-both" style={{ animationDelay: "200ms" }}>
-            Document Request Management System
+            {appSubtitle}
           </p>
         </CardHeader>
         <CardContent className="space-y-6 pt-4">
@@ -60,7 +105,16 @@ export default function LoginPage() {
           </p>
           <div className="animate-fade-in-up animate-fill-both" style={{ animationDelay: "300ms" }}>
             <Button
-              className="w-full bg-blue-500 hover:bg-blue-600 h-12 text-base shadow-md hover:shadow-lg"
+              className="w-full h-12 text-base shadow-md hover:shadow-lg text-white"
+              style={{
+                backgroundColor: primaryColor,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.filter = "brightness(0.9)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.filter = "brightness(1)";
+              }}
               onClick={() => signIn("azure-ad", { callbackUrl: "/dashboard" })}
             >
               <Shield className="mr-2 h-5 w-5" />

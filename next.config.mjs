@@ -4,6 +4,7 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.microsoftonline.com' },
+      { protocol: 'http', hostname: 'localhost' },
     ],
   },
   async headers() {

@@ -47,7 +47,7 @@ export async function GET(
       where: { id },
       include: {
         category: true,
-        createdBy: { select: { id: true, name: true, email: true } },
+        createdBy: { select: { id: true, name: true, email: true, department: true } },
         assignedTo: { select: { id: true, name: true, email: true } },
         documentSlots: { orderBy: { sortOrder: "asc" } },
         attachments: true,
